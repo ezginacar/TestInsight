@@ -4,6 +4,7 @@ set -e
 
 DATA_FILE="docs/data.json"
 TEST_ROOT="tests"
+PROJECT_PATTERN='^\s*\[(api|ui)\]'
 
 DATE=$(date +"%Y-%m-%d")
 
@@ -27,7 +28,7 @@ echo "Collecting Playwright test stats..."
 PLAYWRIGHT_LIST=$(npx playwright test --list 2>/dev/null)
 
 TOTAL=$(echo "$PLAYWRIGHT_LIST" \
-  | grep '^\s*\[chromium\]' \
+  | grep -E "$PROJECT_PATTERN" \
   | wc -l \
   | tr -d ' ')
 
@@ -94,7 +95,7 @@ while IFS= read -r SPEC_FILE; do
   fi
 
   COUNT=$(echo "$PLAYWRIGHT_LIST" \
-    | grep '^\s*\[chromium\]' \
+    | grep -E "$PROJECT_PATTERN" \
     | grep "$BASENAME" \
     | wc -l | tr -d ' ')
 
