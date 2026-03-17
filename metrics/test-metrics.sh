@@ -66,8 +66,32 @@ mkdir -p docs
 
 FILES_JSON="["
 FIRST=1
-for SPEC_FILE in $(find "$TEST_ROOT"/ -name "*.spec.ts" | sort); do
+
+API_TOTAL=0
+API_ACTIVE=0
+API_FIXME=0
+API_SKIPPED=0
+
+UI_TOTAL=0
+UI_ACTIVE=0
+UI_FIXME=0
+UI_SKIPPED=0
+
+OTHER_TOTAL=0
+OTHER_ACTIVE=0
+OTHER_FIXME=0
+OTHER_SKIPPED=0
+
+while IFS= read -r SPEC_FILE; do
   BASENAME=$(basename "$SPEC_FILE")
+
+  if [[ "$SPEC_FILE" == *"/api/"* ]]; then
+    TYPE="api"
+  elif [[ "$SPEC_FILE" == *"/ui/"* ]]; then
+    TYPE="ui"
+  else
+    TYPE="other"
+  fi
 
   COUNT=$(echo "$PLAYWRIGHT_LIST" \
     | grep '^\s*\[chromium\]' \
@@ -82,16 +106,67 @@ for SPEC_FILE in $(find "$TEST_ROOT"/ -name "*.spec.ts" | sort); do
   fi
   FILE_HEALTH=$(calc_health "$FILE_ACTIVE" "$COUNT")
 
+  case "$TYPE" in
+    api)
+      API_TOTAL=$((API_TOTAL + COUNT))
+      API_ACTIVE=$((API_ACTIVE + FILE_ACTIVE))
+      API_FIXME=$((API_FIXME + FILE_FIXME))
+      API_SKIPPED=$((API_SKIPPED + FILE_SKIPPED))
+      ;;
+    ui)
+      UI_TOTAL=$((UI_TOTAL + COUNT))
+      UI_ACTIVE=$((UI_ACTIVE + FILE_ACTIVE))
+      UI_FIXME=$((UI_FIXME + FILE_FIXME))
+      UI_SKIPPED=$((UI_SKIPPED + FILE_SKIPPED))
+      ;;
+    other)
+      OTHER_TOTAL=$((OTHER_TOTAL + COUNT))
+      OTHER_ACTIVE=$((OTHER_ACTIVE + FILE_ACTIVE))
+      OTHER_FIXME=$((OTHER_FIXME + FILE_FIXME))
+      OTHER_SKIPPED=$((OTHER_SKIPPED + FILE_SKIPPED))
+      ;;
+  esac
+
   if [ "$FIRST" -eq 1 ]; then
     FIRST=0
   else
     FILES_JSON="$FILES_JSON,"
   fi
 
-  FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"path\":\"${SPEC_FILE}\",\"total\":${COUNT},\"active\":${FILE_ACTIVE},\"fixme\":${FILE_FIXME},\"skipped\":${FILE_SKIPPED},\"health\":${FILE_HEALTH}}"
-done
+  FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"path\":\"${SPEC_FILE}\",\"type\":\"${TYPE}\",\"total\":${COUNT},\"active\":${FILE_ACTIVE},\"fixme\":${FILE_FIXME},\"skipped\":${FILE_SKIPPED},\"health\":${FILE_HEALTH}}"
+done < <(find "$TEST_ROOT"/ -name "*.spec.ts" | sort)
+
 FILES_JSON="$FILES_JSON]"
 
+API_HEALTH=$(calc_health "$API_ACTIVE" "$API_TOTAL")
+UI_HEALTH=$(calc_health "$UI_ACTIVE" "$UI_TOTAL")
+OTHER_HEALTH=$(calc_health "$OTHER_ACTIVE" "$OTHER_TOTAL")
+
+BY_TYPE_JSON="{
+  \"api\": {
+    \"total\": ${API_TOTAL},
+    \"active\": ${API_ACTIVE},
+    \"fixme\": ${API_FIXME},
+    \"skipped\": ${API_SKIPPED},
+    \"health\": ${API_HEALTH}
+  },
+  \"ui\": {
+    \"total\": ${UI_TOTAL},
+    \"active\": ${UI_ACTIVE},
+    \"fixme\": ${UI_FIXME},
+    \"skipped\": ${UI_SKIPPED},
+    \"health\": ${UI_HEALTH}
+  },
+  \"other\": {
+    \"total\": ${OTHER_TOTAL},
+    \"active\": ${OTHER_ACTIVE},
+    \"fixme\": ${OTHER_FIXME},
+    \"skipped\": ${OTHER_SKIPPED},
+    \"health\": ${OTHER_HEALTH}
+  }
+}"
+
+echo "By type: $BY_TYPE_JSON"
 echo "Files: $FILES_JSON"
 
 if [ "$PERSIST_METRICS" != "true" ]; then
@@ -114,6 +189,7 @@ new_entry = {
     "skipped": $SKIPPED,
     "health": $OVERALL_HEALTH
   },
+  "byType": $BY_TYPE_JSON,
   "files": $FILES_JSON
 }
 
