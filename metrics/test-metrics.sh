@@ -4,6 +4,7 @@ set -e
 
 DATA_FILE="docs/data.json"
 TEST_ROOT="tests"
+RESULT_FILE="test-results/results.json"
 PROJECT_PATTERN='^\s*\[(api|ui)\]'
 
 DATE=$(date +"%Y-%m-%d")
@@ -51,17 +52,49 @@ calc_health() {
   fi
 }
 
+calc_rate() {
+  local value=$1
+  local total=$2
+
+  if [ "$total" -eq 0 ]; then
+    echo 0
+  else
+    echo $((value * 100 / total))
+  fi
+}
+
 OVERALL_HEALTH=$(calc_health "$ACTIVE" "$TOTAL")
 
-echo "Total:   $TOTAL"
-echo "Active:  $ACTIVE"
-echo "Fixme:   $FIXME"
-echo "Skipped: $SKIPPED"
-echo "Health:  ${OVERALL_HEALTH}%"
-echo "Date:    $DATE"
-echo "Branch:  $BRANCH"
-echo "Commit:  $COMMIT"
-echo "Persist: $PERSIST_METRICS"
+# Execution metrics from Playwright JSON report
+if [ -f "$RESULT_FILE" ]; then
+  PASSED=$(jq '[.. | objects | select(.status? == "passed")] | length' "$RESULT_FILE")
+  FAILED=$(jq '[.. | objects | select(.status? == "failed")] | length' "$RESULT_FILE")
+  EXEC_SKIPPED=$(jq '[.. | objects | select(.status? == "skipped")] | length' "$RESULT_FILE")
+else
+  PASSED=0
+  FAILED=0
+  EXEC_SKIPPED=0
+fi
+
+EXEC_TOTAL=$((PASSED + FAILED + EXEC_SKIPPED))
+PASS_RATE=$(calc_rate "$PASSED" "$EXEC_TOTAL")
+FAIL_RATE=$(calc_rate "$FAILED" "$EXEC_TOTAL")
+
+echo "Total:           $TOTAL"
+echo "Active:          $ACTIVE"
+echo "Fixme:           $FIXME"
+echo "Skipped:         $SKIPPED"
+echo "Health:          ${OVERALL_HEALTH}%"
+echo "Execution total: $EXEC_TOTAL"
+echo "Passed:          $PASSED"
+echo "Failed:          $FAILED"
+echo "Exec skipped:    $EXEC_SKIPPED"
+echo "Pass rate:       ${PASS_RATE}%"
+echo "Fail rate:       ${FAIL_RATE}%"
+echo "Date:            $DATE"
+echo "Branch:          $BRANCH"
+echo "Commit:          $COMMIT"
+echo "Persist:         $PERSIST_METRICS"
 
 mkdir -p docs
 
@@ -189,6 +222,14 @@ new_entry = {
     "fixme": $FIXME,
     "skipped": $SKIPPED,
     "health": $OVERALL_HEALTH
+  },
+  "execution": {
+    "total": $EXEC_TOTAL,
+    "passed": $PASSED,
+    "failed": $FAILED,
+    "skipped": $EXEC_SKIPPED,
+    "passRate": $PASS_RATE,
+    "failRate": $FAIL_RATE
   },
   "byType": $BY_TYPE_JSON,
   "files": $FILES_JSON
