@@ -104,3 +104,9 @@ This enables tracking how the test suite evolves over time.
     { "name": "order.spec.ts", "count": 15 }
   ]
 }
+
+## Note
+
+This repository contains a simplified version of the TestInsight concept.
+
+Advanced implementations (including AI-based analysis and extended metrics logic) are not included.
