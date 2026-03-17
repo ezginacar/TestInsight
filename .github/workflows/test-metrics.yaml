@@ -42,7 +42,7 @@ jobs:
 
        # install Playwright browsers and dependencies 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps 
+        run: npx playwright install chromium --with-deps
 
       # create empty data.json if it doesn't exist
       - name: Run Playwright tests
