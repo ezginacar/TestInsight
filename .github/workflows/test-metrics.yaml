@@ -40,6 +40,10 @@ jobs:
       - name: Make metrics script executable
         run: chmod +x ./metrics/test-metrics.sh
 
+       # install Playwright browsers and dependencies 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps 
+
       # create empty data.json if it doesn't exist
       - name: Run Playwright tests
         run: npx playwright test
