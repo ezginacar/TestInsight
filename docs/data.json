@@ -3,8 +3,8 @@
   "last_updated": "2026-03-17",
   "current": {
     "date": "2026-03-17",
-    "commit": "15d1f6e",
-    "branch": "dev",
+    "commit": "adab0f0",
+    "branch": "master",
     "summary": {
       "total": 8,
       "active": 6,
@@ -12,34 +12,10 @@
       "skipped": 1,
       "health": 75
     },
-    "byType": {
-      "api": {
-        "total": 4,
-        "active": 3,
-        "fixme": 1,
-        "skipped": 0,
-        "health": 75
-      },
-      "ui": {
-        "total": 4,
-        "active": 3,
-        "fixme": 0,
-        "skipped": 1,
-        "health": 75
-      },
-      "other": {
-        "total": 0,
-        "active": 0,
-        "fixme": 0,
-        "skipped": 0,
-        "health": 0
-      }
-    },
     "files": [
       {
         "name": "auth.spec.ts",
         "path": "tests/api/auth.spec.ts",
-        "type": "api",
         "total": 4,
         "active": 3,
         "fixme": 1,
@@ -49,7 +25,6 @@
       {
         "name": "alpha.01.spec.ts",
         "path": "tests/ui/alpha.01.spec.ts",
-        "type": "ui",
         "total": 3,
         "active": 2,
         "fixme": 0,
@@ -59,7 +34,6 @@
       {
         "name": "example.spec.ts",
         "path": "tests/ui/example.spec.ts",
-        "type": "ui",
         "total": 1,
         "active": 1,
         "fixme": 0,
@@ -200,6 +174,47 @@
           "name": "example.spec.ts",
           "path": "tests/ui/example.spec.ts",
           "type": "ui",
+          "total": 1,
+          "active": 1,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        }
+      ]
+    },
+    {
+      "date": "2026-03-17",
+      "commit": "adab0f0",
+      "branch": "master",
+      "summary": {
+        "total": 8,
+        "active": 6,
+        "fixme": 1,
+        "skipped": 1,
+        "health": 75
+      },
+      "files": [
+        {
+          "name": "auth.spec.ts",
+          "path": "tests/api/auth.spec.ts",
+          "total": 4,
+          "active": 3,
+          "fixme": 1,
+          "skipped": 0,
+          "health": 75
+        },
+        {
+          "name": "alpha.01.spec.ts",
+          "path": "tests/ui/alpha.01.spec.ts",
+          "total": 3,
+          "active": 2,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 66
+        },
+        {
+          "name": "example.spec.ts",
+          "path": "tests/ui/example.spec.ts",
           "total": 1,
           "active": 1,
           "fixme": 0,
