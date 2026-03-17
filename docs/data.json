@@ -3,29 +3,29 @@
   "last_updated": "2026-03-17",
   "current": {
     "date": "2026-03-17",
-    "commit": "ac962dd",
+    "commit": "b21238f",
     "branch": "master",
     "summary": {
-      "total": 12,
-      "active": 10,
+      "total": 0,
+      "active": 0,
       "fixme": 0,
       "skipped": 2,
-      "health": 83
+      "health": 0
     },
     "byType": {
       "api": {
-        "total": 8,
-        "active": 7,
+        "total": 0,
+        "active": 0,
         "fixme": 0,
         "skipped": 1,
-        "health": 87
+        "health": 0
       },
       "ui": {
-        "total": 4,
-        "active": 3,
+        "total": 0,
+        "active": 0,
         "fixme": 0,
         "skipped": 1,
-        "health": 75
+        "health": 0
       },
       "other": {
         "total": 0,
@@ -40,41 +40,41 @@
         "name": "auth.spec.ts",
         "path": "tests/api/auth.spec.ts",
         "type": "api",
-        "total": 4,
-        "active": 4,
+        "total": 0,
+        "active": 0,
         "fixme": 0,
         "skipped": 0,
-        "health": 100
+        "health": 0
       },
       {
         "name": "beta.api.01.spec.ts",
         "path": "tests/api/beta.api.01.spec.ts",
         "type": "api",
-        "total": 4,
-        "active": 3,
+        "total": 0,
+        "active": 0,
         "fixme": 0,
         "skipped": 1,
-        "health": 75
+        "health": 0
       },
       {
         "name": "alpha.01.spec.ts",
         "path": "tests/ui/alpha.01.spec.ts",
         "type": "ui",
-        "total": 3,
-        "active": 2,
+        "total": 0,
+        "active": 0,
         "fixme": 0,
         "skipped": 1,
-        "health": 66
+        "health": 0
       },
       {
         "name": "example.spec.ts",
         "path": "tests/ui/example.spec.ts",
         "type": "ui",
-        "total": 1,
-        "active": 1,
+        "total": 0,
+        "active": 0,
         "fixme": 0,
         "skipped": 0,
-        "health": 100
+        "health": 0
       }
     ]
   },
@@ -384,6 +384,83 @@
           "fixme": 0,
           "skipped": 0,
           "health": 100
+        }
+      ]
+    },
+    {
+      "date": "2026-03-17",
+      "commit": "b21238f",
+      "branch": "master",
+      "summary": {
+        "total": 0,
+        "active": 0,
+        "fixme": 0,
+        "skipped": 2,
+        "health": 0
+      },
+      "byType": {
+        "api": {
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 0
+        },
+        "ui": {
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 0
+        },
+        "other": {
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 0
+        }
+      },
+      "files": [
+        {
+          "name": "auth.spec.ts",
+          "path": "tests/api/auth.spec.ts",
+          "type": "api",
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 0
+        },
+        {
+          "name": "beta.api.01.spec.ts",
+          "path": "tests/api/beta.api.01.spec.ts",
+          "type": "api",
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 0
+        },
+        {
+          "name": "alpha.01.spec.ts",
+          "path": "tests/ui/alpha.01.spec.ts",
+          "type": "ui",
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 0
+        },
+        {
+          "name": "example.spec.ts",
+          "path": "tests/ui/example.spec.ts",
+          "type": "ui",
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 0
         }
       ]
     }
