@@ -8,7 +8,7 @@ test('alpha ui test 01', async ({ page }) => {
 
 test('alpha ui test 02', async ({ page }) => {
   await console.log('alpha test module 02');
-  await assert(false, 'This is a placeholder assertion for alpha test module 02');
+  expect(false).toBeTruthy();
 });
 
 
