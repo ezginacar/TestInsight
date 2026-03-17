@@ -17,25 +17,50 @@ if [ -z "$COMMIT" ]; then
   COMMIT="local"
 fi
 
+PERSIST_METRICS=false
+if [[ "$BRANCH" == "master" ]]; then
+  PERSIST_METRICS=true
+fi
+
 echo "Collecting Playwright test stats..."
 
-TOTAL=$(npx playwright test --list 2>/dev/null \
+PLAYWRIGHT_LIST=$(npx playwright test --list 2>/dev/null)
+
+TOTAL=$(echo "$PLAYWRIGHT_LIST" \
   | grep '^\s*\[chromium\]' \
   | wc -l \
   | tr -d ' ')
 
-FIXME=$(grep -rn "test\.fixme" "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ')
-SKIPPED=$(grep -rn "test\.skip" "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ')
+FIXME=$(grep -rhoE 'test\.fixme|test\.describe\.fixme' "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ')
+SKIPPED=$(grep -rhoE 'test\.skip|test\.describe\.skip' "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ')
 
 ACTIVE=$((TOTAL - FIXME - SKIPPED))
+if [ "$ACTIVE" -lt 0 ]; then
+  ACTIVE=0
+fi
+
+calc_health() {
+  local active=$1
+  local total=$2
+
+  if [ "$total" -eq 0 ]; then
+    echo 0
+  else
+    echo $((active * 100 / total))
+  fi
+}
+
+OVERALL_HEALTH=$(calc_health "$ACTIVE" "$TOTAL")
 
 echo "Total:   $TOTAL"
 echo "Active:  $ACTIVE"
 echo "Fixme:   $FIXME"
 echo "Skipped: $SKIPPED"
+echo "Health:  ${OVERALL_HEALTH}%"
 echo "Date:    $DATE"
 echo "Branch:  $BRANCH"
 echo "Commit:  $COMMIT"
+echo "Persist: $PERSIST_METRICS"
 
 mkdir -p docs
 
@@ -43,9 +68,19 @@ FILES_JSON="["
 FIRST=1
 for SPEC_FILE in $(find "$TEST_ROOT"/ -name "*.spec.ts" | sort); do
   BASENAME=$(basename "$SPEC_FILE")
-  COUNT=$(npx playwright test --list 2>/dev/null \
+
+  COUNT=$(echo "$PLAYWRIGHT_LIST" \
+    | grep '^\s*\[chromium\]' \
     | grep "$BASENAME" \
     | wc -l | tr -d ' ')
+
+  FILE_FIXME=$(grep -hoE 'test\.fixme|test\.describe\.fixme' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ')
+  FILE_SKIPPED=$(grep -hoE 'test\.skip|test\.describe\.skip' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ')
+  FILE_ACTIVE=$((COUNT - FILE_FIXME - FILE_SKIPPED))
+  if [ "$FILE_ACTIVE" -lt 0 ]; then
+    FILE_ACTIVE=0
+  fi
+  FILE_HEALTH=$(calc_health "$FILE_ACTIVE" "$COUNT")
 
   if [ "$FIRST" -eq 1 ]; then
     FIRST=0
@@ -53,11 +88,16 @@ for SPEC_FILE in $(find "$TEST_ROOT"/ -name "*.spec.ts" | sort); do
     FILES_JSON="$FILES_JSON,"
   fi
 
-  FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"count\":${COUNT}}"
+  FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"path\":\"${SPEC_FILE}\",\"total\":${COUNT},\"active\":${FILE_ACTIVE},\"fixme\":${FILE_FIXME},\"skipped\":${FILE_SKIPPED},\"health\":${FILE_HEALTH}}"
 done
 FILES_JSON="$FILES_JSON]"
 
 echo "Files: $FILES_JSON"
+
+if [ "$PERSIST_METRICS" != "true" ]; then
+  echo "Skipping docs/data.json update for branch: $BRANCH"
+  exit 0
+fi
 
 python3 - <<EOF
 import json
@@ -67,10 +107,13 @@ new_entry = {
   "date": "$DATE",
   "commit": "$COMMIT",
   "branch": "$BRANCH",
-  "total": $TOTAL,
-  "active": $ACTIVE,
-  "fixme": $FIXME,
-  "skipped": $SKIPPED,
+  "summary": {
+    "total": $TOTAL,
+    "active": $ACTIVE,
+    "fixme": $FIXME,
+    "skipped": $SKIPPED,
+    "health": $OVERALL_HEALTH
+  },
   "files": $FILES_JSON
 }
 
@@ -81,7 +124,13 @@ except:
     existing = {"project": "test-insight", "history": []}
 
 history = existing.get("history", [])
-history = [h for h in history if not (h["date"] == new_entry["date"] and h["commit"] == new_entry["commit"])]
+history = [
+    h for h in history
+    if not (
+        h.get("date") == new_entry["date"]
+        and h.get("commit") == new_entry["commit"]
+    )
+]
 history.append(new_entry)
 
 result = {

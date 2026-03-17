@@ -1,0 +1,53 @@
+name: Update Test Metrics
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metrics-master
+  cancel-in-progress: true
+
+jobs:
+  update-metrics:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Make metrics script executable
+        run: chmod +x ./metrics/test-metrics.sh
+
+      - name: Generate metrics
+        run: ./metrics/test-metrics.sh
+
+      - name: Commit updated metrics if changed
+        run: |
+          if git diff --quiet docs/data.json; then
+            echo "No changes in docs/data.json"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add docs/data.json
+          git commit -m "chore(metrics): update test metrics"
+          git push
