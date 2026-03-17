@@ -67,9 +67,9 @@ OVERALL_HEALTH=$(calc_health "$ACTIVE" "$TOTAL")
 
 # Execution metrics from Playwright JSON report
 if [ -f "$RESULT_FILE" ]; then
-  PASSED=$(jq '[.. | objects | select(.status? == "passed")] | length' "$RESULT_FILE")
-  FAILED=$(jq '[.. | objects | select(.status? == "failed")] | length' "$RESULT_FILE")
-  EXEC_SKIPPED=$(jq '[.. | objects | select(.status? == "skipped")] | length' "$RESULT_FILE")
+  PASSED=$(jq '[.suites[].specs[].tests[].results[] | select(.status == "passed")] | length' "$RESULT_FILE")
+  FAILED=$(jq '[.suites[].specs[].tests[].results[] | select(.status == "failed")] | length' "$RESULT_FILE")
+  EXEC_SKIPPED=$(jq '[.suites[].specs[].tests[].results[] | select(.status == "skipped")] | length' "$RESULT_FILE")
 else
   PASSED=0
   FAILED=0
