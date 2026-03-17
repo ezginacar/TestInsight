@@ -1,0 +1,36 @@
+{
+  "project": "test-insight",
+  "last_updated": "2026-03-17",
+  "current": {
+    "date": "2026-03-17",
+    "commit": "03c0460",
+    "branch": "master",
+    "total": 2,
+    "active": 2,
+    "fixme": 0,
+    "skipped": 0,
+    "files": [
+      {
+        "name": "example.spec.ts",
+        "count": 6
+      }
+    ]
+  },
+  "history": [
+    {
+      "date": "2026-03-17",
+      "commit": "03c0460",
+      "branch": "master",
+      "total": 2,
+      "active": 2,
+      "fixme": 0,
+      "skipped": 0,
+      "files": [
+        {
+          "name": "example.spec.ts",
+          "count": 6
+        }
+      ]
+    }
+  ]
+}
