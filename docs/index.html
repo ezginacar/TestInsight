@@ -33,12 +33,6 @@
       flex-wrap: wrap;
     }
 
-    .header h1 {
-      font-size: 18px;
-      font-weight: 500;
-      margin: 0;
-    }
-
     .header .meta {
       font-size: 13px;
       color: #888;
@@ -64,20 +58,9 @@
       flex-shrink: 0;
     }
 
-    .tazman-text {
-      line-height: 1.2;
-    }
-
-    .tazman-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .tazman-subtitle {
-      font-size: 11px;
-      color: #777;
-    }
+    .tazman-text { line-height: 1.2; }
+    .tazman-title { font-size: 13px; font-weight: 600; color: #333; }
+    .tazman-subtitle { font-size: 11px; color: #777; }
 
     .container {
       max-width: 1100px;
@@ -115,23 +98,15 @@
       margin-bottom: 8px;
     }
 
-    .card .value {
-      font-size: 30px;
-      font-weight: 500;
-    }
+    .card .value { font-size: 30px; font-weight: 500; }
+    .card .sub { font-size: 12px; color: #aaa; margin-top: 4px; }
 
-    .card .sub {
-      font-size: 12px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-
-    .card.total .value { color: #378ADD; }
-    .card.active .value { color: #1D9E75; }
-    .card.fixme .value { color: #BA7517; }
-    .card.skipped .value { color: #E24B4A; }
-    .card.passed .value { color: #1D9E75; }
-    .card.failed .value { color: #E24B4A; }
+    .card.total .value    { color: #378ADD; }
+    .card.active .value   { color: #1D9E75; }
+    .card.fixme .value    { color: #BA7517; }
+    .card.skipped .value  { color: #E24B4A; }
+    .card.passed .value   { color: #1D9E75; }
+    .card.failed .value   { color: #E24B4A; }
     .card.pass-rate .value { color: #378ADD; }
     .card.fail-rate .value { color: #BA7517; }
 
@@ -176,46 +151,92 @@
       border-radius: 50%;
     }
 
-    .files {
+    /* Module breakdown table */
+    .modules {
       background: #fff;
       border: 1px solid #e5e5e5;
       border-radius: 10px;
       padding: 24px;
+      margin-bottom: 24px;
     }
 
-    .files h2 {
+    .modules h2 {
       font-size: 14px;
       font-weight: 500;
       color: #555;
       margin-bottom: 16px;
     }
 
-    .file-row {
+    .module-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .module-table th {
+      text-align: left;
+      font-size: 11px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0 12px 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .module-table th:first-child { padding-left: 0; }
+
+    .module-table td {
+      padding: 12px 12px 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+      color: #444;
+    }
+
+    .module-table tr:last-child td { border-bottom: none; }
+
+    .module-table td:first-child {
+      font-family: monospace;
+      font-size: 14px;
+      color: #378ADD;
+      font-weight: 500;
+    }
+
+    .module-table .num { text-align: right; padding-right: 24px; }
+    .module-table .num-last { text-align: right; padding-right: 0; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge.pass { background: #e8f7f2; color: #1D9E75; }
+    .badge.fail { background: #fdecea; color: #E24B4A; }
+    .badge.skip { background: #f5f5f5; color: #888; }
+
+    .health-bar-wrap {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
-      font-size: 13px;
-      gap: 12px;
+      gap: 8px;
     }
 
-    .file-row:last-child {
-      border-bottom: none;
+    .health-bar {
+      width: 60px;
+      height: 6px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      overflow: hidden;
     }
 
-    .file-name {
-      font-family: monospace;
-      color: #378ADD;
-      flex: 1;
+    .health-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: #1D9E75;
     }
 
-    .file-meta {
-      display: flex;
-      gap: 12px;
-      color: #666;
-      white-space: nowrap;
-    }
+    .health-bar-fill.warn { background: #BA7517; }
+    .health-bar-fill.danger { background: #E24B4A; }
 
     .no-data {
       text-align: center;
@@ -225,40 +246,19 @@
     }
 
     @media (max-width: 900px) {
-      .cards {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .cards { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media (max-width: 700px) {
-      .header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .header-left {
-        align-items: flex-start;
-        flex-direction: column;
-      }
+      .header { flex-direction: column; align-items: flex-start; }
+      .header-left { align-items: flex-start; flex-direction: column; }
+      .module-table th:nth-child(n+4),
+      .module-table td:nth-child(n+4) { display: none; }
     }
 
     @media (max-width: 600px) {
-      .cards {
-        grid-template-columns: 1fr;
-      }
-
-      .file-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .file-meta {
-        flex-wrap: wrap;
-      }
-
-      .tazman-badge {
-        border-radius: 16px;
-      }
+      .cards { grid-template-columns: 1fr; }
+      .tazman-badge { border-radius: 16px; }
     }
   </style>
 </head>
@@ -266,18 +266,18 @@
   <div class="header">
     <div class="header-left">
       <div class="tazman-badge">
-       git  <img src="tazman.jpg" alt="Tazman" />
+        <img src="tazman.jpg" alt="Tazman" />
         <div class="tazman-text">
           <div class="tazman-title">Tazman, Chief Quality Officer</div>
           <div class="tazman-subtitle">Monitoring test insights</div>
         </div>
       </div>
     </div>
-
     <span class="meta" id="last-updated">Loading...</span>
   </div>
 
   <div class="container">
+
     <div class="section-title">Inventory</div>
     <div class="cards">
       <div class="card total">
@@ -285,19 +285,16 @@
         <div class="value" id="total">—</div>
         <div class="sub" id="total-delta"></div>
       </div>
-
       <div class="card active">
         <div class="label">Active</div>
         <div class="value" id="active">—</div>
         <div class="sub">running tests</div>
       </div>
-
       <div class="card fixme">
         <div class="label">Fixme</div>
         <div class="value" id="fixme">—</div>
         <div class="sub">needs fixing</div>
       </div>
-
       <div class="card skipped">
         <div class="label">Skipped</div>
         <div class="value" id="skipped">—</div>
@@ -312,19 +309,16 @@
         <div class="value" id="passed">—</div>
         <div class="sub">successful tests</div>
       </div>
-
       <div class="card failed">
         <div class="label">Failed</div>
         <div class="value" id="failed">—</div>
         <div class="sub">failed tests</div>
       </div>
-
       <div class="card pass-rate">
         <div class="label">Pass Rate</div>
         <div class="value" id="pass-rate">—</div>
         <div class="sub">execution quality</div>
       </div>
-
       <div class="card fail-rate">
         <div class="label">Fail Rate</div>
         <div class="value" id="fail-rate">—</div>
@@ -339,9 +333,7 @@
         <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Active</div>
         <div class="legend-item"><div class="legend-dot" style="background:#E24B4A"></div>Fixme + Skipped</div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="inventoryChart"></canvas>
-      </div>
+      <div class="chart-wrap"><canvas id="inventoryChart"></canvas></div>
     </div>
 
     <div class="chart-box">
@@ -351,17 +343,17 @@
         <div class="legend-item"><div class="legend-dot" style="background:#E24B4A"></div>Failed</div>
         <div class="legend-item"><div class="legend-dot" style="background:#378ADD"></div>Pass Rate</div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="executionChart"></canvas>
-      </div>
+      <div class="chart-wrap"><canvas id="executionChart"></canvas></div>
     </div>
 
-    <div class="files">
-      <h2>Test files</h2>
-      <div id="files-list">
+    <!-- Module breakdown -->
+    <div class="section-title">MODULES</div>
+    <div class="modules">
+      <div id="module-table-wrap">
         <div class="no-data">Loading...</div>
       </div>
     </div>
+
   </div>
 
   <script>
@@ -379,104 +371,122 @@
       return history.length > 1 ? history[history.length - 2] : null;
     }
 
-    function delta(currentValue, previousValue) {
-      if (previousValue === null || previousValue === undefined) return '';
-      const diff = currentValue - previousValue;
+    function delta(cur, prev) {
+      if (prev === null || prev === undefined) return '';
+      const diff = cur - prev;
       if (diff === 0) return 'no change';
       return diff > 0 ? `+${diff} since last run` : `${diff} since last run`;
+    }
+
+    function healthColor(pct) {
+      if (pct >= 80) return '';
+      if (pct >= 50) return 'warn';
+      return 'danger';
     }
 
     function renderCards(data) {
       const cur = data.current;
       const prev = getPrevious(data.history);
+      const s = cur.summary || {};
+      const e = cur.execution || {};
+      const ps = prev?.summary || null;
 
-      const curSummary = cur.summary || {};
-      const prevSummary = prev?.summary || null;
-      const curExecution = cur.execution || {};
+      document.getElementById('total').textContent = s.total ?? '—';
+      document.getElementById('active').textContent = s.active ?? '—';
+      document.getElementById('fixme').textContent = s.fixme ?? '—';
+      document.getElementById('skipped').textContent = s.skipped ?? '—';
+      document.getElementById('passed').textContent = e.passed ?? '—';
+      document.getElementById('failed').textContent = e.failed ?? '—';
+      document.getElementById('pass-rate').textContent = e.passRate != null ? `${e.passRate}%` : '—';
+      document.getElementById('fail-rate').textContent = e.failRate != null ? `${e.failRate}%` : '—';
+      document.getElementById('total-delta').textContent = delta(s.total ?? 0, ps ? ps.total : null);
+      document.getElementById('last-updated').textContent = `Last updated: ${cur.date} · ${cur.commit}`;
+    }
 
-      document.getElementById('total').textContent = curSummary.total ?? '—';
-      document.getElementById('active').textContent = curSummary.active ?? '—';
-      document.getElementById('fixme').textContent = curSummary.fixme ?? '—';
-      document.getElementById('skipped').textContent = curSummary.skipped ?? '—';
+    function renderModules(data) {
+      const byModule = data.current.byModule || {};
+      const wrap = document.getElementById('module-table-wrap');
+      const modules = Object.entries(byModule);
 
-      document.getElementById('passed').textContent = curExecution.passed ?? '—';
-      document.getElementById('failed').textContent = curExecution.failed ?? '—';
-      document.getElementById('pass-rate').textContent = curExecution.passRate != null ? `${curExecution.passRate}%` : '—';
-      document.getElementById('fail-rate').textContent = curExecution.failRate != null ? `${curExecution.failRate}%` : '—';
+      if (!modules.length) {
+        wrap.innerHTML = '<div class="no-data">No module data available</div>';
+        return;
+      }
 
-      document.getElementById('total-delta').textContent = delta(
-        curSummary.total ?? 0,
-        prevSummary ? prevSummary.total : null
-      );
+      const rows = modules.map(([name, m]) => {
+        const exec = m.execution || {};
+        const passed = exec.passed ?? '—';
+        const failed = exec.failed ?? '—';
+        const skipped = exec.skipped ?? '—';
+        const passRate = exec.passRate != null ? `${exec.passRate}%` : '—';
+        const health = m.health ?? 0;
+        const hColor = healthColor(health);
 
-      document.getElementById('last-updated').textContent =
-        `Last updated: ${cur.date} · ${cur.commit}`;
+        return `
+          <tr>
+            <td>${name}</td>
+            <td class="num">${m.total ?? '—'}</td>
+            <td class="num">${m.active ?? '—'}</td>
+            <td class="num">${m.skipped ?? '—'}</td>
+            <td class="num"><span class="badge pass">${passed} passed</span></td>
+            <td class="num"><span class="badge fail">${failed} failed</span></td>
+            <td class="num"><span class="badge skip">${skipped} skipped</span></td>
+            <td class="num">${passRate}</td>
+            <td class="num-last">
+              <div class="health-bar-wrap">
+                <div class="health-bar">
+                  <div class="health-bar-fill ${hColor}" style="width:${health}%"></div>
+                </div>
+                <span>${health}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      wrap.innerHTML = `
+        <table class="module-table">
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th class="num">Total</th>
+              <th class="num">Active</th>
+              <th class="num">Skipped</th>
+              <th class="num">Passed</th>
+              <th class="num">Failed</th>
+              <th class="num">Exec Skip</th>
+              <th class="num">Pass Rate</th>
+              <th class="num-last">Health</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
     }
 
     function renderInventoryChart(data) {
       const history = data.history || [];
       const labels = history.map(h => h.commit?.slice(0, 7) || h.date);
-
       const total = history.map(h => h.summary?.total ?? 0);
       const active = history.map(h => h.summary?.active ?? 0);
       const inactive = history.map(h => (h.summary?.fixme ?? 0) + (h.summary?.skipped ?? 0));
 
-      const ctx = document.getElementById('inventoryChart').getContext('2d');
-
-      new Chart(ctx, {
+      new Chart(document.getElementById('inventoryChart').getContext('2d'), {
         type: 'line',
         data: {
           labels,
           datasets: [
-            {
-              label: 'Total',
-              data: total,
-              borderColor: '#378ADD',
-              backgroundColor: 'rgba(55,138,221,0.08)',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#378ADD',
-              tension: 0.35,
-              fill: false
-            },
-            {
-              label: 'Active',
-              data: active,
-              borderColor: '#1D9E75',
-              backgroundColor: 'rgba(29,158,117,0.08)',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#1D9E75',
-              tension: 0.35,
-              fill: false
-            },
-            {
-              label: 'Fixme + Skipped',
-              data: inactive,
-              borderColor: '#E24B4A',
-              backgroundColor: 'rgba(226,75,74,0.08)',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#E24B4A',
-              tension: 0.35,
-              fill: false
-            }
+            { label: 'Total', data: total, borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#378ADD', tension: 0.35, fill: false },
+            { label: 'Active', data: active, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#1D9E75', tension: 0.35, fill: false },
+            { label: 'Fixme + Skipped', data: inactive, borderColor: '#E24B4A', backgroundColor: 'rgba(226,75,74,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#E24B4A', tension: 0.35, fill: false }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: {
-              grid: { color: '#f0f0f0' },
-              ticks: { font: { size: 11 }, color: '#aaa' }
-            },
-            y: {
-              beginAtZero: true,
-              grid: { color: '#f0f0f0' },
-              ticks: { font: { size: 11 }, color: '#aaa', stepSize: 1 }
-            }
+            x: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, color: '#aaa' } },
+            y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, color: '#aaa', stepSize: 1 } }
           }
         }
       });
@@ -485,122 +495,42 @@
     function renderExecutionChart(data) {
       const history = data.history || [];
       const labels = history.map(h => h.commit?.slice(0, 7) || h.date);
-
       const passed = history.map(h => h.execution?.passed ?? 0);
       const failed = history.map(h => h.execution?.failed ?? 0);
       const passRate = history.map(h => h.execution?.passRate ?? 0);
 
-      const ctx = document.getElementById('executionChart').getContext('2d');
-
-      new Chart(ctx, {
+      new Chart(document.getElementById('executionChart').getContext('2d'), {
         type: 'line',
         data: {
           labels,
           datasets: [
-            {
-              label: 'Passed',
-              data: passed,
-              borderColor: '#1D9E75',
-              backgroundColor: 'rgba(29,158,117,0.08)',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#1D9E75',
-              tension: 0.35,
-              fill: false,
-              yAxisID: 'y'
-            },
-            {
-              label: 'Failed',
-              data: failed,
-              borderColor: '#E24B4A',
-              backgroundColor: 'rgba(226,75,74,0.08)',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#E24B4A',
-              tension: 0.35,
-              fill: false,
-              yAxisID: 'y'
-            },
-            {
-              label: 'Pass Rate',
-              data: passRate,
-              borderColor: '#378ADD',
-              backgroundColor: 'rgba(55,138,221,0.08)',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#378ADD',
-              tension: 0.35,
-              fill: false,
-              yAxisID: 'y1'
-            }
+            { label: 'Passed', data: passed, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#1D9E75', tension: 0.35, fill: false, yAxisID: 'y' },
+            { label: 'Failed', data: failed, borderColor: '#E24B4A', backgroundColor: 'rgba(226,75,74,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#E24B4A', tension: 0.35, fill: false, yAxisID: 'y' },
+            { label: 'Pass Rate', data: passRate, borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#378ADD', tension: 0.35, fill: false, yAxisID: 'y1' }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: {
-              grid: { color: '#f0f0f0' },
-              ticks: { font: { size: 11 }, color: '#aaa' }
-            },
-            y: {
-              beginAtZero: true,
-              grid: { color: '#f0f0f0' },
-              ticks: { font: { size: 11 }, color: '#aaa', stepSize: 1 }
-            },
-            y1: {
-              beginAtZero: true,
-              max: 100,
-              position: 'right',
-              grid: { drawOnChartArea: false },
-              ticks: {
-                font: { size: 11 },
-                color: '#aaa',
-                callback: value => `${value}%`
-              }
-            }
+            x: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, color: '#aaa' } },
+            y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, color: '#aaa', stepSize: 1 } },
+            y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 11 }, color: '#aaa', callback: v => `${v}%` } }
           }
         }
       });
     }
 
-    function renderFiles(data) {
-      const files = data.current.files || [];
-      const container = document.getElementById('files-list');
-
-      if (!files.length) {
-        container.innerHTML = '<div class="no-data">No file breakdown available</div>';
-        return;
-      }
-
-      container.innerHTML = files.map(f => `
-        <div class="file-row">
-          <span class="file-name">${f.name}</span>
-          <div class="file-meta">
-            <span>${f.type}</span>
-            <span>${f.total} total</span>
-            <span>${f.active} active</span>
-            <span>${f.skipped} skipped</span>
-            <span>${f.health}% health</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
     async function init() {
       const data = await loadData();
-
       if (!data) {
-        document.querySelector('.container').innerHTML =
-          '<div class="no-data">Could not load data.json</div>';
+        document.querySelector('.container').innerHTML = '<div class="no-data">Could not load data.json</div>';
         return;
       }
-
       renderCards(data);
+      renderModules(data);
       renderInventoryChart(data);
       renderExecutionChart(data);
-      renderFiles(data);
     }
 
     init();

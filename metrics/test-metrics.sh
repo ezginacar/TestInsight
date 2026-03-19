@@ -19,8 +19,8 @@ if [ -z "$COMMIT" ]; then
 fi
 
 # Run context
-RUN_TYPE="${RUN_TYPE:-full}"                 # full | critical | smoke
-RUN_REASON="${RUN_REASON:-regular}"          # regular | holiday | release | hotfix | nightly
+RUN_TYPE="${RUN_TYPE:-full}"
+RUN_REASON="${RUN_REASON:-regular}"
 RUN_LABEL="${RUN_LABEL:-Standard Regression}"
 RUN_FILTER="${RUN_FILTER:-all}"
 
@@ -32,114 +32,58 @@ if [[ "$RUN_TYPE" != "full" ]]; then
   PY_FULL_REGRESSION_EXECUTED="False"
 fi
 
-# Persist rules
-PERSIST_METRICS=false
+# Persist rules (can be overridden via env var PERSIST_METRICS)
+PERSIST_METRICS=${PERSIST_METRICS:-false}
 if [[ "$BRANCH" == "master" || "$BRANCH" == feature* ]]; then
   PERSIST_METRICS=true
 fi
 
-# If there is no change to test spec files, avoid appending a new point to the history chart.
-# This keeps the graph focused only on commits that actually touched tests.
-SPEC_CHANGED=false
-
-if [ ! -f "$DATA_FILE" ]; then
-  # First run, need to create data.json
-  SPEC_CHANGED=true
-fi
-
-# Check for changes between commits (CI-style)
-if [ "$SPEC_CHANGED" != true ]; then
-  BASE_REF="${GITHUB_EVENT_BEFORE:-}"
-  HEAD_REF="${GITHUB_SHA:-HEAD}"
-
-  if [ -z "$BASE_REF" ]; then
-    # fallback to comparing against the previous commit
-    if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
-      BASE_REF="HEAD~1"
-    fi
-  fi
-
-  if [ -z "$BASE_REF" ] || ! git rev-parse --verify "$BASE_REF" >/dev/null 2>&1; then
-    # if we can't resolve a previous commit, assume this is the first meaningful run
-    SPEC_CHANGED=true
-  else
-    if git diff --name-only "$BASE_REF" "$HEAD_REF" -- 'tests/**/*.spec.ts' | grep -q .; then
-      SPEC_CHANGED=true
-    fi
-  fi
-fi
-
-# Also treat local (unstaged/staged/untracked) spec file changes as meaningful
-if [ "$SPEC_CHANGED" != true ]; then
-  if git diff --name-only -- 'tests/**/*.spec.ts' | grep -q . ||
-     git diff --cached --name-only -- 'tests/**/*.spec.ts' | grep -q . ||
-     git ls-files --others --exclude-standard -- 'tests/**/*.spec.ts' | grep -q .; then
-    SPEC_CHANGED=true
-  fi
-fi
-
-if [ "$SPEC_CHANGED" != true ]; then
-  echo "No spec changes detected; skipping metrics update."
-  exit 0
-fi
-
 echo "Collecting Playwright test stats..."
 
-# Preserve the last executed test run results before running `--list`, as `--list` will
-# still respect the configured JSON reporter and overwrite the results file.
+# Preserve the latest full-test results.json while we use Playwright's --list mode.
+# The --list run can overwrite the configured json reporter output, so we back it up.
+rm -f "$SAFE_RESULT_FILE"
 if [ -f "$RESULT_FILE" ]; then
   cp "$RESULT_FILE" "$SAFE_RESULT_FILE"
 fi
 
-PLAYWRIGHT_LIST=$(npx playwright test --list 2>/dev/null || true)
+PLAYWRIGHT_LIST=$(npx playwright test --list --reporter=list 2>/dev/null || true)
 
-# Gerekirse debug için aç:
-# echo "---- PLAYWRIGHT LIST START ----"
-# printf '%s\n' "$PLAYWRIGHT_LIST"
-# echo "---- PLAYWRIGHT LIST END ----"
+# Restore the real result file if it was overwritten.
+if [ -f "$SAFE_RESULT_FILE" ]; then
+  mv "$SAFE_RESULT_FILE" "$RESULT_FILE"
+else
+  rm -f "$RESULT_FILE"
+fi
 
 calc_health() {
   local active=$1
   local total=$2
-
-  if [ "$total" -eq 0 ]; then
-    echo 0
-  else
-    echo $((active * 100 / total))
-  fi
+  if [ "$total" -eq 0 ]; then echo 0; else echo $((active * 100 / total)); fi
 }
 
 calc_rate() {
   local value=$1
   local total=$2
-
-  if [ "$total" -eq 0 ]; then
-    echo 0
-  else
-    echo $((value * 100 / total))
-  fi
+  if [ "$total" -eq 0 ]; then echo 0; else echo $((value * 100 / total)); fi
 }
 
-TOTAL=$(printf '%s\n' "$PLAYWRIGHT_LIST" | awk '/\[(api|ui)\]/{count++} END{print count+0}')
+# Toplam test sayısı
+TOTAL=$(printf '%s\n' "$PLAYWRIGHT_LIST" | grep -cE '^\s+[^ ]' || true)
+TOTAL=${TOTAL:-0}
 
 FIXME=$(grep -rhoE 'test\.fixme|test\.describe\.fixme' "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ' || true)
 SKIPPED=$(grep -rhoE 'test\.skip|test\.describe\.skip' "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ' || true)
-
 FIXME=${FIXME:-0}
 SKIPPED=${SKIPPED:-0}
 
 ACTIVE=$((TOTAL - FIXME - SKIPPED))
-if [ "$ACTIVE" -lt 0 ]; then
-  ACTIVE=0
-fi
+if [ "$ACTIVE" -lt 0 ]; then ACTIVE=0; fi
 
 OVERALL_HEALTH=$(calc_health "$ACTIVE" "$TOTAL")
 
-# Execution metrics from Playwright JSON report
-# Test objeleri has("status") and has("results") ile bulunur.
-# status değerleri: "expected" (passed), "unexpected" (failed), "skipped"
-# Tek jq çağrısıyla üç değer birden parse edilir.
-if [ -f "$SAFE_RESULT_FILE" ]; then
+# Global execution metrics (based on the most recent full test run)
+if [ -f "$RESULT_FILE" ]; then
   EXEC_STATS=$(jq '
     [.. | objects | select(has("status") and has("results") and
       (.status == "expected" or .status == "unexpected" or .status == "skipped"))]
@@ -151,7 +95,7 @@ if [ -f "$SAFE_RESULT_FILE" ]; then
         failed: (.unexpected // 0),
         skipped: (.skipped // 0)
       }
-  ' "$SAFE_RESULT_FILE")
+  ' "$RESULT_FILE")
   PASSED=$(echo "$EXEC_STATS" | jq '.passed')
   FAILED=$(echo "$EXEC_STATS" | jq '.failed')
   EXEC_SKIPPED=$(echo "$EXEC_STATS" | jq '.skipped')
@@ -191,113 +135,89 @@ echo "Persist:         $PERSIST_METRICS"
 mkdir -p docs
 
 FILES_JSON="["
-FIRST=1
+FIRST_FILE=1
+BY_MODULE_JSON="{"
+FIRST_MOD=1
 
-API_TOTAL=0
-API_ACTIVE=0
-API_FIXME=0
-API_SKIPPED=0
+# Modüller: tests/ altındaki klasörler (api, web, mobile, desktop ...)
+MODULES=$(find "$TEST_ROOT" -mindepth 1 -maxdepth 1 -type d | sed "s|^${TEST_ROOT}/||" | sort)
 
-UI_TOTAL=0
-UI_ACTIVE=0
-UI_FIXME=0
-UI_SKIPPED=0
+for MODULE in $MODULES; do
+  MOD_DIR="${TEST_ROOT}/${MODULE}"
+  MOD_TOTAL=0
+  MOD_ACTIVE=0
+  MOD_FIXME=0
+  MOD_SKIPPED=0
 
-OTHER_TOTAL=0
-OTHER_ACTIVE=0
-OTHER_FIXME=0
-OTHER_SKIPPED=0
-
-while IFS= read -r SPEC_FILE; do
-  BASENAME=$(basename "$SPEC_FILE")
-
-  if [[ "$SPEC_FILE" == *"/api/"* ]]; then
-    TYPE="api"
-  elif [[ "$SPEC_FILE" == *"/ui/"* ]]; then
-    TYPE="ui"
+  # Modül bazlı execution — results.json suite title'larından çıkar
+  # Suite title formatı: "api/auth.spec.ts" → modül = "api"
+  if [ -f "$SAFE_RESULT_FILE" ]; then
+    MOD_EXEC=$(jq --arg mod "$MODULE" '
+      [
+        .suites[]
+        | select(.title | startswith($mod + "/"))
+        | .. | objects
+        | select(has("status") and has("results") and
+            (.status == "expected" or .status == "unexpected" or .status == "skipped"))
+      ]
+      | group_by(.status)
+      | map({(.[0].status): length})
+      | add // {}
+      | {
+          passed: (.expected // 0),
+          failed: (.unexpected // 0),
+          skipped: (.skipped // 0)
+        }
+    ' "$SAFE_RESULT_FILE")
+    MOD_PASSED=$(echo "$MOD_EXEC" | jq '.passed')
+    MOD_FAILED=$(echo "$MOD_EXEC" | jq '.failed')
+    MOD_EXEC_SKIPPED=$(echo "$MOD_EXEC" | jq '.skipped')
   else
-    TYPE="other"
+    MOD_PASSED=0
+    MOD_FAILED=0
+    MOD_EXEC_SKIPPED=0
   fi
 
-  COUNT=$(printf '%s\n' "$PLAYWRIGHT_LIST" | awk -v file="$BASENAME" '
-    /\[(api|ui)\]/ && index($0, file) {count++}
-    END {print count+0}
-  ')
+  while IFS= read -r SPEC_FILE; do
+    BASENAME=$(basename "$SPEC_FILE")
 
-  FILE_FIXME=$(grep -hoE 'test\.fixme|test\.describe\.fixme' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ' || true)
-  FILE_SKIPPED=$(grep -hoE 'test\.skip|test\.describe\.skip' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ' || true)
+    COUNT=$(printf '%s\n' "$PLAYWRIGHT_LIST" | grep -c "$BASENAME" || true)
+    COUNT=${COUNT:-0}
 
-  FILE_FIXME=${FILE_FIXME:-0}
-  FILE_SKIPPED=${FILE_SKIPPED:-0}
+    FILE_FIXME=$(grep -hoE 'test\.fixme|test\.describe\.fixme' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ' || true)
+    FILE_SKIPPED=$(grep -hoE 'test\.skip|test\.describe\.skip' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ' || true)
+    FILE_FIXME=${FILE_FIXME:-0}
+    FILE_SKIPPED=${FILE_SKIPPED:-0}
 
-  FILE_ACTIVE=$((COUNT - FILE_FIXME - FILE_SKIPPED))
-  if [ "$FILE_ACTIVE" -lt 0 ]; then
-    FILE_ACTIVE=0
-  fi
+    FILE_ACTIVE=$((COUNT - FILE_FIXME - FILE_SKIPPED))
+    if [ "$FILE_ACTIVE" -lt 0 ]; then FILE_ACTIVE=0; fi
 
-  FILE_HEALTH=$(calc_health "$FILE_ACTIVE" "$COUNT")
+    FILE_HEALTH=$(calc_health "$FILE_ACTIVE" "$COUNT")
 
-  case "$TYPE" in
-    api)
-      API_TOTAL=$((API_TOTAL + COUNT))
-      API_ACTIVE=$((API_ACTIVE + FILE_ACTIVE))
-      API_FIXME=$((API_FIXME + FILE_FIXME))
-      API_SKIPPED=$((API_SKIPPED + FILE_SKIPPED))
-      ;;
-    ui)
-      UI_TOTAL=$((UI_TOTAL + COUNT))
-      UI_ACTIVE=$((UI_ACTIVE + FILE_ACTIVE))
-      UI_FIXME=$((UI_FIXME + FILE_FIXME))
-      UI_SKIPPED=$((UI_SKIPPED + FILE_SKIPPED))
-      ;;
-    other)
-      OTHER_TOTAL=$((OTHER_TOTAL + COUNT))
-      OTHER_ACTIVE=$((OTHER_ACTIVE + FILE_ACTIVE))
-      OTHER_FIXME=$((OTHER_FIXME + FILE_FIXME))
-      OTHER_SKIPPED=$((OTHER_SKIPPED + FILE_SKIPPED))
-      ;;
-  esac
+    MOD_TOTAL=$((MOD_TOTAL + COUNT))
+    MOD_ACTIVE=$((MOD_ACTIVE + FILE_ACTIVE))
+    MOD_FIXME=$((MOD_FIXME + FILE_FIXME))
+    MOD_SKIPPED=$((MOD_SKIPPED + FILE_SKIPPED))
 
-  if [ "$FIRST" -eq 1 ]; then
-    FIRST=0
-  else
-    FILES_JSON="$FILES_JSON,"
-  fi
+    if [ "$FIRST_FILE" -eq 1 ]; then FIRST_FILE=0; else FILES_JSON="$FILES_JSON,"; fi
+    FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"path\":\"${SPEC_FILE}\",\"module\":\"${MODULE}\",\"total\":${COUNT},\"active\":${FILE_ACTIVE},\"fixme\":${FILE_FIXME},\"skipped\":${FILE_SKIPPED},\"health\":${FILE_HEALTH}}"
 
-  FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"path\":\"${SPEC_FILE}\",\"type\":\"${TYPE}\",\"total\":${COUNT},\"active\":${FILE_ACTIVE},\"fixme\":${FILE_FIXME},\"skipped\":${FILE_SKIPPED},\"health\":${FILE_HEALTH}}"
-done < <(find "$TEST_ROOT"/ -name "*.spec.ts" | sort)
+  done < <(find "$MOD_DIR" -name "*.spec.ts" | sort)
 
-FILES_JSON="$FILES_JSON]"
+  MOD_HEALTH=$(calc_health "$MOD_ACTIVE" "$MOD_TOTAL")
+  MOD_EXEC_TOTAL=$((MOD_PASSED + MOD_FAILED + MOD_EXEC_SKIPPED))
+  MOD_PASS_RATE=$(calc_rate "$MOD_PASSED" "$MOD_EXEC_TOTAL")
+  MOD_FAIL_RATE=$(calc_rate "$MOD_FAILED" "$MOD_EXEC_TOTAL")
 
-API_HEALTH=$(calc_health "$API_ACTIVE" "$API_TOTAL")
-UI_HEALTH=$(calc_health "$UI_ACTIVE" "$UI_TOTAL")
-OTHER_HEALTH=$(calc_health "$OTHER_ACTIVE" "$OTHER_TOTAL")
+  if [ "$FIRST_MOD" -eq 1 ]; then FIRST_MOD=0; else BY_MODULE_JSON="${BY_MODULE_JSON},"; fi
+  BY_MODULE_JSON="${BY_MODULE_JSON}\"${MODULE}\":{\"total\":${MOD_TOTAL},\"active\":${MOD_ACTIVE},\"fixme\":${MOD_FIXME},\"skipped\":${MOD_SKIPPED},\"health\":${MOD_HEALTH},\"execution\":{\"passed\":${MOD_PASSED},\"failed\":${MOD_FAILED},\"skipped\":${MOD_EXEC_SKIPPED},\"passRate\":${MOD_PASS_RATE},\"failRate\":${MOD_FAIL_RATE}}}"
 
-BY_TYPE_JSON="{
-  \"api\": {
-    \"total\": ${API_TOTAL},
-    \"active\": ${API_ACTIVE},
-    \"fixme\": ${API_FIXME},
-    \"skipped\": ${API_SKIPPED},
-    \"health\": ${API_HEALTH}
-  },
-  \"ui\": {
-    \"total\": ${UI_TOTAL},
-    \"active\": ${UI_ACTIVE},
-    \"fixme\": ${UI_FIXME},
-    \"skipped\": ${UI_SKIPPED},
-    \"health\": ${UI_HEALTH}
-  },
-  \"other\": {
-    \"total\": ${OTHER_TOTAL},
-    \"active\": ${OTHER_ACTIVE},
-    \"fixme\": ${OTHER_FIXME},
-    \"skipped\": ${OTHER_SKIPPED},
-    \"health\": ${OTHER_HEALTH}
-  }
-}"
+done
 
-echo "By type: $BY_TYPE_JSON"
+FILES_JSON="${FILES_JSON}]"
+BY_MODULE_JSON="${BY_MODULE_JSON}}"
+
+echo "By module: $BY_MODULE_JSON"
 echo "Files: $FILES_JSON"
 
 if [ "$PERSIST_METRICS" != "true" ]; then
@@ -307,8 +227,70 @@ fi
 
 python3 - <<EOF
 import json
+from pathlib import Path
 
-data_file = "$DATA_FILE"
+DATA_FILE = "$DATA_FILE"
+RESULT_FILE = "$RESULT_FILE"
+
+# Build module-level summaries from file info.
+files = json.loads("""$FILES_JSON""")
+by_module = {}
+for f in files:
+    module = f.get("module", "root")
+    entry = by_module.setdefault(module, {"total": 0, "active": 0, "fixme": 0, "skipped": 0, "health": 0})
+    entry["total"] += f.get("total", 0)
+    entry["active"] += f.get("active", 0)
+    entry["fixme"] += f.get("fixme", 0)
+    entry["skipped"] += f.get("skipped", 0)
+
+# Compute a simple health score (ratio of active to total) for each module.
+for module, entry in by_module.items():
+    total = entry.get("total", 0)
+    active = entry.get("active", 0)
+    entry["health"] = int(active * 100 / total) if total else 0
+
+# Derive execution stats per module from Playwright results.json (if present).
+module_execution = {}
+if Path(RESULT_FILE).is_file():
+    try:
+        results = json.load(open(RESULT_FILE))
+
+        def walk_suites(suite, file_path=None):
+            file_path = suite.get("file") or file_path
+            for spec in suite.get("specs", []):
+                for test in spec.get("tests", []):
+                    status = test.get("status")
+                    if status is None:
+                        continue
+                    module = (file_path or "").split("/")[0] or "root"
+                    exec_entry = module_execution.setdefault(module, {"passed": 0, "failed": 0, "skipped": 0})
+                    if status == "expected":
+                        exec_entry["passed"] += 1
+                    elif status == "unexpected":
+                        exec_entry["failed"] += 1
+                    elif status == "skipped":
+                        exec_entry["skipped"] += 1
+            for child in suite.get("suites", []):
+                walk_suites(child, file_path)
+
+        for top in results.get("suites", []):
+            walk_suites(top)
+    except Exception:
+        module_execution = {}
+
+for module, stats in module_execution.items():
+    total = stats.get("passed", 0) + stats.get("failed", 0) + stats.get("skipped", 0)
+    pass_rate = int(stats.get("passed", 0) * 100 / total) if total else 0
+    fail_rate = int(stats.get("failed", 0) * 100 / total) if total else 0
+    module_entry = by_module.setdefault(module, {"total": 0, "active": 0, "fixme": 0, "skipped": 0, "health": 0})
+    module_entry["execution"] = {
+        "passed": stats.get("passed", 0),
+        "failed": stats.get("failed", 0),
+        "skipped": stats.get("skipped", 0),
+        "passRate": pass_rate,
+        "failRate": fail_rate
+    }
+
 new_entry = {
   "date": "$DATE",
   "commit": "$COMMIT",
@@ -335,12 +317,12 @@ new_entry = {
     "passRate": $PASS_RATE,
     "failRate": $FAIL_RATE
   },
-  "byType": $BY_TYPE_JSON,
-  "files": $FILES_JSON
+  "byModule": by_module,
+  "files": files
 }
 
 try:
-    with open(data_file) as f:
+    with open(DATA_FILE) as f:
         existing = json.load(f)
 except Exception:
     existing = {"project": "test-insight", "history": []}
@@ -362,7 +344,7 @@ def comparable_payload(entry):
     return {
         "runContext": entry.get("runContext"),
         "summary": entry.get("summary"),
-        "byType": entry.get("byType"),
+        "byModule": entry.get("byModule"),
         "files": entry.get("files"),
     }
 
@@ -370,11 +352,7 @@ if last_entry is None or comparable_payload(last_entry) != comparable_payload(ne
     history.append(new_entry)
     history = history[-6:]
 else:
-    # No meaningful change since the last recorded run (same test inventory and metrics).
-    # Avoid rewriting the file so that charts / history don't get new points on every rerun.
-    print("No meaningful inventory change detected; leaving", data_file, "unchanged.")
-    import sys
-    sys.exit(0)
+    print("No meaningful inventory change detected, skipping history append.")
 
 result = {
     "project": existing.get("project", "test-insight"),
@@ -383,10 +361,10 @@ result = {
     "history": history
 }
 
-with open(data_file, "w") as f:
+with open(DATA_FILE, "w") as f:
     json.dump(result, f, indent=2)
 
-print("Saved to", data_file)
+print("Saved to", DATA_FILE)
 EOF
 
 echo "Metrics written to docs/data.json"
