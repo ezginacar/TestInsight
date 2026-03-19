@@ -3,8 +3,8 @@
   "last_updated": "2026-03-19",
   "current": {
     "date": "2026-03-19",
-    "commit": "a8d6ffa",
-    "branch": "hotfix/theta",
+    "commit": "204c3b7",
+    "branch": "master",
     "runContext": {
       "type": "full",
       "reason": "regular",
@@ -21,11 +21,11 @@
     },
     "execution": {
       "total": 25,
-      "passed": 18,
-      "failed": 4,
+      "passed": 9,
+      "failed": 13,
       "skipped": 3,
-      "passRate": 72,
-      "failRate": 16
+      "passRate": 36,
+      "failRate": 52
     },
     "byModule": {
       "api": {
@@ -49,11 +49,11 @@
         "skipped": 2,
         "health": 83,
         "execution": {
-          "passed": 9,
-          "failed": 1,
+          "passed": 0,
+          "failed": 10,
           "skipped": 2,
-          "passRate": 75,
-          "failRate": 8
+          "passRate": 0,
+          "failRate": 83
         }
       }
     },
@@ -141,91 +141,6 @@
     ]
   },
   "history": [
-    {
-      "date": "2026-03-17",
-      "commit": "8e2f214",
-      "branch": "master",
-      "summary": {
-        "total": 12,
-        "active": 10,
-        "fixme": 0,
-        "skipped": 2,
-        "health": 83
-      },
-      "execution": {
-        "total": 0,
-        "passed": 0,
-        "failed": 0,
-        "skipped": 0,
-        "passRate": 0,
-        "failRate": 0
-      },
-      "byType": {
-        "api": {
-          "total": 8,
-          "active": 7,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 87
-        },
-        "ui": {
-          "total": 4,
-          "active": 3,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 75
-        },
-        "other": {
-          "total": 0,
-          "active": 0,
-          "fixme": 0,
-          "skipped": 0,
-          "health": 0
-        }
-      },
-      "files": [
-        {
-          "name": "auth.spec.ts",
-          "path": "tests/api/auth.spec.ts",
-          "type": "api",
-          "total": 4,
-          "active": 4,
-          "fixme": 0,
-          "skipped": 0,
-          "health": 100
-        },
-        {
-          "name": "beta.api.01.spec.ts",
-          "path": "tests/api/beta.api.01.spec.ts",
-          "type": "api",
-          "total": 4,
-          "active": 3,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 75
-        },
-        {
-          "name": "alpha.01.spec.ts",
-          "path": "tests/ui/alpha.01.spec.ts",
-          "type": "ui",
-          "total": 3,
-          "active": 2,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 66
-        },
-        {
-          "name": "example.spec.ts",
-          "path": "tests/ui/example.spec.ts",
-          "type": "ui",
-          "total": 1,
-          "active": 1,
-          "fixme": 0,
-          "skipped": 0,
-          "health": 100
-        }
-      ]
-    },
     {
       "date": "2026-03-17",
       "commit": "b76c8a7",
@@ -730,6 +645,145 @@
             "skipped": 2,
             "passRate": 75,
             "failRate": 8
+          }
+        }
+      },
+      "files": [
+        {
+          "name": "auth.spec.ts",
+          "path": "tests/api/auth.spec.ts",
+          "module": "api",
+          "total": 4,
+          "active": 4,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "beta.api.01.spec.ts",
+          "path": "tests/api/beta.api.01.spec.ts",
+          "module": "api",
+          "total": 4,
+          "active": 3,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 75
+        },
+        {
+          "name": "eta.spec.ts",
+          "path": "tests/api/eta.spec.ts",
+          "module": "api",
+          "total": 5,
+          "active": 5,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "zeta.spec.ts",
+          "path": "tests/api/zeta.spec.ts",
+          "module": "api",
+          "total": 2,
+          "active": 2,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "alpha.01.spec.ts",
+          "path": "tests/ui/alpha.01.spec.ts",
+          "module": "ui",
+          "total": 3,
+          "active": 3,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "delta.spec.ts",
+          "path": "tests/ui/delta.spec.ts",
+          "module": "ui",
+          "total": 4,
+          "active": 2,
+          "fixme": 0,
+          "skipped": 2,
+          "health": 50
+        },
+        {
+          "name": "epsilon.spec.ts",
+          "path": "tests/ui/epsilon.spec.ts",
+          "module": "ui",
+          "total": 4,
+          "active": 4,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "example.spec.ts",
+          "path": "tests/ui/example.spec.ts",
+          "module": "ui",
+          "total": 1,
+          "active": 1,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        }
+      ]
+    },
+    {
+      "date": "2026-03-19",
+      "commit": "204c3b7",
+      "branch": "master",
+      "runContext": {
+        "type": "full",
+        "reason": "regular",
+        "label": "Standard Regression",
+        "filter": "all",
+        "fullRegressionExecuted": true
+      },
+      "summary": {
+        "total": 25,
+        "active": 22,
+        "fixme": 0,
+        "skipped": 3,
+        "health": 88
+      },
+      "execution": {
+        "total": 25,
+        "passed": 9,
+        "failed": 13,
+        "skipped": 3,
+        "passRate": 36,
+        "failRate": 52
+      },
+      "byModule": {
+        "api": {
+          "total": 15,
+          "active": 14,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 93,
+          "execution": {
+            "passed": 9,
+            "failed": 3,
+            "skipped": 1,
+            "passRate": 69,
+            "failRate": 23
+          }
+        },
+        "ui": {
+          "total": 12,
+          "active": 10,
+          "fixme": 0,
+          "skipped": 2,
+          "health": 83,
+          "execution": {
+            "passed": 0,
+            "failed": 10,
+            "skipped": 2,
+            "passRate": 0,
+            "failRate": 83
           }
         }
       },
