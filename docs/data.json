@@ -3,7 +3,7 @@
   "last_updated": "2026-03-19",
   "current": {
     "date": "2026-03-19",
-    "commit": "fbcfe7a",
+    "commit": "5cc8310",
     "branch": "master",
     "runContext": {
       "type": "full",
@@ -13,27 +13,27 @@
       "fullRegressionExecuted": true
     },
     "summary": {
-      "total": 23,
-      "active": 20,
+      "total": 25,
+      "active": 22,
       "fixme": 0,
       "skipped": 3,
-      "health": 86
+      "health": 88
     },
     "execution": {
-      "total": 23,
-      "passed": 5,
-      "failed": 15,
+      "total": 25,
+      "passed": 9,
+      "failed": 13,
       "skipped": 3,
-      "passRate": 21,
-      "failRate": 65
+      "passRate": 36,
+      "failRate": 52
     },
     "byType": {
       "api": {
-        "total": 11,
-        "active": 10,
+        "total": 15,
+        "active": 14,
         "fixme": 0,
         "skipped": 1,
-        "health": 90
+        "health": 93
       },
       "ui": {
         "total": 12,
@@ -75,8 +75,18 @@
         "name": "eta.spec.ts",
         "path": "tests/api/eta.spec.ts",
         "type": "api",
-        "total": 3,
-        "active": 3,
+        "total": 5,
+        "active": 5,
+        "fixme": 0,
+        "skipped": 0,
+        "health": 100
+      },
+      {
+        "name": "zeta.spec.ts",
+        "path": "tests/api/zeta.spec.ts",
+        "type": "api",
+        "total": 2,
+        "active": 2,
         "fixme": 0,
         "skipped": 0,
         "health": 100
@@ -124,83 +134,6 @@
     ]
   },
   "history": [
-    {
-      "date": "2026-03-17",
-      "commit": "39af855",
-      "branch": "master",
-      "summary": {
-        "total": 12,
-        "active": 10,
-        "fixme": 0,
-        "skipped": 2,
-        "health": 83
-      },
-      "byType": {
-        "api": {
-          "total": 8,
-          "active": 7,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 87
-        },
-        "ui": {
-          "total": 4,
-          "active": 3,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 75
-        },
-        "other": {
-          "total": 0,
-          "active": 0,
-          "fixme": 0,
-          "skipped": 0,
-          "health": 0
-        }
-      },
-      "files": [
-        {
-          "name": "auth.spec.ts",
-          "path": "tests/api/auth.spec.ts",
-          "type": "api",
-          "total": 4,
-          "active": 4,
-          "fixme": 0,
-          "skipped": 0,
-          "health": 100
-        },
-        {
-          "name": "beta.api.01.spec.ts",
-          "path": "tests/api/beta.api.01.spec.ts",
-          "type": "api",
-          "total": 4,
-          "active": 3,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 75
-        },
-        {
-          "name": "alpha.01.spec.ts",
-          "path": "tests/ui/alpha.01.spec.ts",
-          "type": "ui",
-          "total": 3,
-          "active": 2,
-          "fixme": 0,
-          "skipped": 1,
-          "health": 66
-        },
-        {
-          "name": "example.spec.ts",
-          "path": "tests/ui/example.spec.ts",
-          "type": "ui",
-          "total": 1,
-          "active": 1,
-          "fixme": 0,
-          "skipped": 0,
-          "health": 100
-        }
-      ]
-    },
     {
       "date": "2026-03-17",
       "commit": "4806f68",
@@ -644,6 +577,138 @@
           "type": "api",
           "total": 3,
           "active": 3,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "alpha.01.spec.ts",
+          "path": "tests/ui/alpha.01.spec.ts",
+          "type": "ui",
+          "total": 3,
+          "active": 3,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "delta.spec.ts",
+          "path": "tests/ui/delta.spec.ts",
+          "type": "ui",
+          "total": 4,
+          "active": 2,
+          "fixme": 0,
+          "skipped": 2,
+          "health": 50
+        },
+        {
+          "name": "epsilon.spec.ts",
+          "path": "tests/ui/epsilon.spec.ts",
+          "type": "ui",
+          "total": 4,
+          "active": 4,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "example.spec.ts",
+          "path": "tests/ui/example.spec.ts",
+          "type": "ui",
+          "total": 1,
+          "active": 1,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        }
+      ]
+    },
+    {
+      "date": "2026-03-19",
+      "commit": "5cc8310",
+      "branch": "master",
+      "runContext": {
+        "type": "full",
+        "reason": "regular",
+        "label": "Standard Regression",
+        "filter": "all",
+        "fullRegressionExecuted": true
+      },
+      "summary": {
+        "total": 25,
+        "active": 22,
+        "fixme": 0,
+        "skipped": 3,
+        "health": 88
+      },
+      "execution": {
+        "total": 25,
+        "passed": 9,
+        "failed": 13,
+        "skipped": 3,
+        "passRate": 36,
+        "failRate": 52
+      },
+      "byType": {
+        "api": {
+          "total": 15,
+          "active": 14,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 93
+        },
+        "ui": {
+          "total": 12,
+          "active": 10,
+          "fixme": 0,
+          "skipped": 2,
+          "health": 83
+        },
+        "other": {
+          "total": 0,
+          "active": 0,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 0
+        }
+      },
+      "files": [
+        {
+          "name": "auth.spec.ts",
+          "path": "tests/api/auth.spec.ts",
+          "type": "api",
+          "total": 4,
+          "active": 4,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "beta.api.01.spec.ts",
+          "path": "tests/api/beta.api.01.spec.ts",
+          "type": "api",
+          "total": 4,
+          "active": 3,
+          "fixme": 0,
+          "skipped": 1,
+          "health": 75
+        },
+        {
+          "name": "eta.spec.ts",
+          "path": "tests/api/eta.spec.ts",
+          "type": "api",
+          "total": 5,
+          "active": 5,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "zeta.spec.ts",
+          "path": "tests/api/zeta.spec.ts",
+          "type": "api",
+          "total": 2,
+          "active": 2,
           "fixme": 0,
           "skipped": 0,
           "health": 100
