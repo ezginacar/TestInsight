@@ -36,18 +36,13 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      # make sure metrics script is executable
+      # script can be runn
       - name: Make metrics script executable
         run: chmod +x ./metrics/test-metrics.sh
-
-       # install Playwright browsers and dependencies 
-      - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
 
       # create empty data.json if it doesn't exist
       - name: Run Playwright tests
         run: npx playwright test
-        # even if tests fail, we want to generate metrics and update data.json, so we set continue-on-error to true
         continue-on-error: true
 
       - name: Generate metrics

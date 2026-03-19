@@ -21,16 +21,62 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+      flex-wrap: wrap;
     }
 
     .header h1 {
       font-size: 18px;
       font-weight: 500;
+      margin: 0;
     }
 
     .header .meta {
       font-size: 13px;
       color: #888;
+      white-space: nowrap;
+    }
+
+    .tazman-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 999px;
+    }
+
+    .tazman-badge img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid #ddd;
+      flex-shrink: 0;
+    }
+
+    .tazman-text {
+      line-height: 1.2;
+    }
+
+    .tazman-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .tazman-subtitle {
+      font-size: 11px;
+      color: #777;
     }
 
     .container {
@@ -184,15 +230,21 @@
       }
     }
 
-    @media (max-width: 600px) {
-      .cards {
-        grid-template-columns: 1fr;
-      }
-
+    @media (max-width: 700px) {
       .header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+      }
+
+      .header-left {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .cards {
+        grid-template-columns: 1fr;
       }
 
       .file-row {
@@ -203,12 +255,25 @@
       .file-meta {
         flex-wrap: wrap;
       }
+
+      .tazman-badge {
+        border-radius: 16px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>🎭 Playwright Test Dashboard</h1>
+    <div class="header-left">
+      <div class="tazman-badge">
+       git  <img src="tazman.jpg" alt="Tazman" />
+        <div class="tazman-text">
+          <div class="tazman-title">Tazman, Chief Quality Officer</div>
+          <div class="tazman-subtitle">Monitoring test insights</div>
+        </div>
+      </div>
+    </div>
+
     <span class="meta" id="last-updated">Loading...</span>
   </div>
 
@@ -328,7 +393,6 @@
       const curSummary = cur.summary || {};
       const prevSummary = prev?.summary || null;
       const curExecution = cur.execution || {};
-      const prevExecution = prev?.execution || null;
 
       document.getElementById('total').textContent = curSummary.total ?? '—';
       document.getElementById('active').textContent = curSummary.active ?? '—';
