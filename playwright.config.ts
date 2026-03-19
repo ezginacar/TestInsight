@@ -13,20 +13,7 @@ export default defineConfig({
   ],
 
   use: {
-    trace: 'on-first-retry'
-  },
-
-  projects: [
-    {
-      name: 'api',
-      testMatch: /tests\/api\/.*\.spec\.ts/
-    },
-    {
-      name: 'ui',
-      testMatch: /tests\/ui\/.*\.spec\.ts/,
-      use: {
-        browserName: 'chromium'
-      }
-    }
-  ]
+    trace: 'on-first-retry',
+    browserName: 'chromium'
+  }
 });
