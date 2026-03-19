@@ -1,3 +1,12 @@
+
+## 📊 Test Dashboard
+
+Live test insights and quality metrics visualization.
+
+👉 [View Live Dashboard](https://ezginacar.github.io/TestInsight/)
+
+---
+
 ## Summary TR
 
 TestInsight, otomasyon projelerinde master/main üzerindeki toplam test envanteri ile branch bazlı yeni test artışını birbirinden ayırarak yorumlamayı hedefler.
