@@ -3,7 +3,7 @@
   "last_updated": "2026-03-24",
   "current": {
     "date": "2026-03-24",
-    "commit": "95f2187",
+    "commit": "407acc9",
     "branch": "master",
     "runContext": {
       "type": "full",
@@ -21,11 +21,11 @@
     },
     "execution": {
       "total": 25,
-      "passed": 10,
-      "failed": 13,
+      "passed": 19,
+      "failed": 4,
       "skipped": 2,
-      "passRate": 40,
-      "failRate": 52
+      "passRate": 76,
+      "failRate": 16
     },
     "branchDelta": {
       "isFeatureBranch": false,
@@ -47,11 +47,11 @@
         "skipped": 0,
         "health": 100,
         "execution": {
-          "passed": 4,
-          "failed": 0,
+          "passed": 7,
+          "failed": 1,
           "skipped": 0,
-          "passRate": 100,
-          "failRate": 0
+          "passRate": 87,
+          "failRate": 12
         }
       },
       "api/moduleB": {
@@ -61,11 +61,11 @@
         "skipped": 0,
         "health": 100,
         "execution": {
-          "passed": 1,
-          "failed": 0,
+          "passed": 3,
+          "failed": 2,
           "skipped": 0,
-          "passRate": 100,
-          "failRate": 0
+          "passRate": 60,
+          "failRate": 40
         }
       },
       "ui": {
@@ -75,11 +75,11 @@
         "skipped": 2,
         "health": 83,
         "execution": {
-          "passed": 0,
-          "failed": 10,
+          "passed": 9,
+          "failed": 1,
           "skipped": 2,
-          "passRate": 0,
-          "failRate": 83
+          "passRate": 75,
+          "failRate": 8
         }
       }
     },
@@ -1140,6 +1140,171 @@
             "skipped": 2,
             "passRate": 0,
             "failRate": 83
+          }
+        }
+      },
+      "files": [
+        {
+          "name": "auth.spec.ts",
+          "path": "tests/api/moduleA/auth.spec.ts",
+          "module": "api/moduleA",
+          "total": 4,
+          "active": 4,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "beta.api.01.spec.ts",
+          "path": "tests/api/moduleA/beta.api.01.spec.ts",
+          "module": "api/moduleA",
+          "total": 4,
+          "active": 4,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "eta.spec.ts",
+          "path": "tests/api/moduleB/eta.spec.ts",
+          "module": "api/moduleB",
+          "total": 3,
+          "active": 3,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "zeta.spec.ts",
+          "path": "tests/api/moduleB/zeta.spec.ts",
+          "module": "api/moduleB",
+          "total": 2,
+          "active": 2,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "alpha.01.spec.ts",
+          "path": "tests/ui/alpha.01.spec.ts",
+          "module": "ui",
+          "total": 3,
+          "active": 3,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "delta.spec.ts",
+          "path": "tests/ui/delta.spec.ts",
+          "module": "ui",
+          "total": 4,
+          "active": 2,
+          "fixme": 0,
+          "skipped": 2,
+          "health": 50
+        },
+        {
+          "name": "epsilon.spec.ts",
+          "path": "tests/ui/epsilon.spec.ts",
+          "module": "ui",
+          "total": 4,
+          "active": 4,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        },
+        {
+          "name": "example.spec.ts",
+          "path": "tests/ui/example.spec.ts",
+          "module": "ui",
+          "total": 1,
+          "active": 1,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100
+        }
+      ]
+    },
+    {
+      "date": "2026-03-24",
+      "commit": "407acc9",
+      "branch": "master",
+      "runContext": {
+        "type": "full",
+        "reason": "regular",
+        "label": "Standard Regression",
+        "filter": "all",
+        "fullRegressionExecuted": true
+      },
+      "summary": {
+        "total": 25,
+        "active": 23,
+        "fixme": 0,
+        "skipped": 2,
+        "health": 92
+      },
+      "execution": {
+        "total": 25,
+        "passed": 19,
+        "failed": 4,
+        "skipped": 2,
+        "passRate": 76,
+        "failRate": 16
+      },
+      "branchDelta": {
+        "isFeatureBranch": false,
+        "mergeBaseCommit": "",
+        "baselineTotal": 0,
+        "baselineActive": 0,
+        "baselineSkipped": 0,
+        "baselineFixme": 0,
+        "newTests": 0,
+        "removedTests": 0,
+        "activatedTests": 0,
+        "deactivatedTests": 0
+      },
+      "byModule": {
+        "api/moduleA": {
+          "total": 8,
+          "active": 8,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100,
+          "execution": {
+            "passed": 7,
+            "failed": 1,
+            "skipped": 0,
+            "passRate": 87,
+            "failRate": 12
+          }
+        },
+        "api/moduleB": {
+          "total": 5,
+          "active": 5,
+          "fixme": 0,
+          "skipped": 0,
+          "health": 100,
+          "execution": {
+            "passed": 3,
+            "failed": 2,
+            "skipped": 0,
+            "passRate": 60,
+            "failRate": 40
+          }
+        },
+        "ui": {
+          "total": 12,
+          "active": 10,
+          "fixme": 0,
+          "skipped": 2,
+          "health": 83,
+          "execution": {
+            "passed": 9,
+            "failed": 1,
+            "skipped": 2,
+            "passRate": 75,
+            "failRate": 8
           }
         }
       },
