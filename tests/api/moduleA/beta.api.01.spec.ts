@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
     expect(false).toBeTruthy();
   });
 
-  test.skip('Api beta tests 03', async ({ request }) => {
+  test('Api beta tests 03', async ({ request }) => {
     await console.log('beta test module 03');
   });
 

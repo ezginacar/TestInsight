@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Eta Tests', () => {
 
-  test('Api eta tests 01', async ({ request }) => {
+  test('Api eta tests 01', { tag: ['@smoke'] }, async ({ request }) => {
     console.log('eta test 01');
   });
 
