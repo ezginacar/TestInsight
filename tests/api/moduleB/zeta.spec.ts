@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-
   test('Api zeta tests 01', async ({ request }) => {
     await console.log('beta test module 01');
   });

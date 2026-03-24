@@ -1,6 +1,6 @@
 import { test} from '@playwright/test';
 
-test('alpha ui test 01', async ({ page }) => {
+test('alpha ui test 01 @smoke', async ({ page }) => {
   await console.log('alpha test module 01');
 });
 
