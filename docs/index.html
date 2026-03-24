@@ -110,6 +110,151 @@
     .card.pass-rate .value { color: #378ADD; }
     .card.fail-rate .value { color: #BA7517; }
 
+    /* ── Branch Delta Section ─────────────────────────────────────────── */
+
+    .delta-box {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .delta-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .delta-box-header h2 {
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .delta-branch-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0f6ff;
+      border: 1px solid #cde0f8;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #378ADD;
+      font-family: monospace;
+    }
+
+    .delta-branch-pill::before {
+      content: '';
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #378ADD;
+    }
+
+    .delta-merge-base {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 20px;
+      font-family: monospace;
+    }
+
+    .delta-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .delta-card {
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .delta-card.baseline {
+      background: #f5f5f5;
+      border: 1px solid #e8e8e8;
+    }
+
+    .delta-card.new-tests {
+      background: #e8f7f2;
+      border: 1px solid #b8e8d8;
+    }
+
+    .delta-card.activated {
+      background: #e8f2ff;
+      border: 1px solid #b8d8f8;
+    }
+
+    .delta-card.removed {
+      background: #fdecea;
+      border: 1px solid #f8c8c8;
+    }
+
+    .delta-card.deactivated {
+      background: #fff8e8;
+      border: 1px solid #f8e8b8;
+    }
+
+    .delta-card .dlabel {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+    }
+
+    .delta-card.new-tests .dlabel  { color: #1D9E75; }
+    .delta-card.activated .dlabel  { color: #378ADD; }
+    .delta-card.removed .dlabel    { color: #E24B4A; }
+    .delta-card.deactivated .dlabel { color: #BA7517; }
+
+    .delta-card .dvalue {
+      font-size: 28px;
+      font-weight: 500;
+      color: #444;
+    }
+
+    .delta-card.new-tests .dvalue  { color: #1D9E75; }
+    .delta-card.activated .dvalue  { color: #378ADD; }
+    .delta-card.removed .dvalue    { color: #E24B4A; }
+    .delta-card.deactivated .dvalue { color: #BA7517; }
+
+    .delta-card .dsub {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    /* summary sentence at the bottom of delta box */
+    .delta-summary {
+      margin-top: 4px;
+      padding: 12px 16px;
+      background: #fafafa;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .delta-summary strong { color: #1a1a1a; }
+    .delta-summary .plus  { color: #1D9E75; font-weight: 600; }
+    .delta-summary .minus { color: #E24B4A; font-weight: 600; }
+    .delta-summary .info  { color: #378ADD; font-weight: 600; }
+
+    .delta-hidden {
+      display: none;
+    }
+
+    /* ── Charts & Modules (unchanged) ────────────────────────────────── */
+
     .chart-box {
       background: #fff;
       border: 1px solid #e5e5e5;
@@ -151,7 +296,6 @@
       border-radius: 50%;
     }
 
-    /* Module breakdown table */
     .modules {
       background: #fff;
       border: 1px solid #e5e5e5;
@@ -247,6 +391,7 @@
 
     @media (max-width: 900px) {
       .cards { grid-template-columns: repeat(2, 1fr); }
+      .delta-cards { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media (max-width: 700px) {
@@ -258,6 +403,7 @@
 
     @media (max-width: 600px) {
       .cards { grid-template-columns: 1fr; }
+      .delta-cards { grid-template-columns: 1fr; }
       .tazman-badge { border-radius: 16px; }
     }
   </style>
@@ -326,6 +472,43 @@
       </div>
     </div>
 
+    <!-- Branch Delta — sadece feature branch'lerde görünür -->
+    <div id="delta-section" class="delta-hidden">
+      <div class="section-title">Branch Delta</div>
+      <div class="delta-box">
+        <div class="delta-box-header">
+          <h2>What changed in this branch vs. baseline</h2>
+          <span class="delta-branch-pill" id="delta-branch-name">—</span>
+        </div>
+        <div class="delta-merge-base" id="delta-merge-base"></div>
+
+        <div class="delta-cards">
+          <div class="delta-card baseline">
+            <div class="dlabel">Baseline (master)</div>
+            <div class="dvalue" id="delta-baseline-total">—</div>
+            <div class="dsub" id="delta-baseline-active">— active</div>
+          </div>
+          <div class="delta-card new-tests">
+            <div class="dlabel">New Tests Added</div>
+            <div class="dvalue" id="delta-new-tests">—</div>
+            <div class="dsub">brand new test cases</div>
+          </div>
+          <div class="delta-card activated">
+            <div class="dlabel">Tests Activated</div>
+            <div class="dvalue" id="delta-activated">—</div>
+            <div class="dsub">skip/fixme → active</div>
+          </div>
+          <div class="delta-card removed" id="delta-removed-card">
+            <div class="dlabel">Tests Removed</div>
+            <div class="dvalue" id="delta-removed">—</div>
+            <div class="dsub">deleted from suite</div>
+          </div>
+        </div>
+
+        <div class="delta-summary" id="delta-summary"></div>
+      </div>
+    </div>
+
     <div class="chart-box">
       <h2>Inventory trend</h2>
       <div class="legend">
@@ -346,7 +529,6 @@
       <div class="chart-wrap"><canvas id="executionChart"></canvas></div>
     </div>
 
-    <!-- Module breakdown -->
     <div class="section-title">MODULES</div>
     <div class="modules">
       <div id="module-table-wrap">
@@ -401,6 +583,91 @@
       document.getElementById('fail-rate').textContent = e.failRate != null ? `${e.failRate}%` : '—';
       document.getElementById('total-delta').textContent = delta(s.total ?? 0, ps ? ps.total : null);
       document.getElementById('last-updated').textContent = `Last updated: ${cur.date} · ${cur.commit}`;
+    }
+
+    function renderBranchDelta(data) {
+      const cur = data.current;
+      const bd = cur.branchDelta;
+
+      // branchDelta yoksa veya master branch ise section'ı gizle
+      if (!bd || !bd.isFeatureBranch) return;
+
+      document.getElementById('delta-section').classList.remove('delta-hidden');
+
+      // Branch adı
+      document.getElementById('delta-branch-name').textContent = cur.branch || '—';
+
+      // Merge base commit
+      if (bd.mergeBaseCommit) {
+        document.getElementById('delta-merge-base').textContent =
+          `Compared against merge base: ${bd.mergeBaseCommit.slice(0, 12)}`;
+      }
+
+      // Kartlar
+      document.getElementById('delta-baseline-total').textContent = bd.baselineTotal ?? '—';
+      document.getElementById('delta-baseline-active').textContent =
+        bd.baselineActive != null ? `${bd.baselineActive} active` : '—';
+      document.getElementById('delta-new-tests').textContent = bd.newTests ?? 0;
+      document.getElementById('delta-activated').textContent = bd.activatedTests ?? 0;
+      document.getElementById('delta-removed').textContent = bd.removedTests ?? 0;
+
+      // Removed card'ı sadece 0'dan büyükse renkli göster
+      if ((bd.removedTests ?? 0) === 0) {
+        document.getElementById('delta-removed-card').style.background = '#fafafa';
+        document.getElementById('delta-removed-card').style.border = '1px solid #e8e8e8';
+        document.querySelector('#delta-removed-card .dlabel').style.color = '#aaa';
+        document.getElementById('delta-removed').style.color = '#ccc';
+      }
+
+      // Özet cümle
+      const summary = buildDeltaSummary(cur, bd);
+      document.getElementById('delta-summary').innerHTML = summary;
+    }
+
+    function buildDeltaSummary(cur, bd) {
+      const branch = cur.branch || 'this branch';
+      const baseline = bd.baselineTotal ?? 0;
+      const baselineActive = bd.baselineActive ?? 0;
+      const newTests = bd.newTests ?? 0;
+      const activated = bd.activatedTests ?? 0;
+      const removed = bd.removedTests ?? 0;
+      const deactivated = bd.deactivatedTests ?? 0;
+      const currentTotal = cur.summary?.total ?? 0;
+      const currentActive = cur.summary?.active ?? 0;
+      const passed = cur.execution?.passed ?? 0;
+      const execTotal = cur.execution?.total ?? 0;
+      const passRate = cur.execution?.passRate ?? 0;
+
+      let parts = [];
+
+      parts.push(
+        `Baseline on master: <strong>${baseline} tests</strong> (${baselineActive} active).`
+      );
+
+      if (newTests > 0) {
+        parts.push(`<span class="plus">+${newTests} new test${newTests > 1 ? 's' : ''}</span> added in this branch.`);
+      }
+      if (activated > 0) {
+        parts.push(`<span class="info">+${activated} test${activated > 1 ? 's' : ''}</span> activated (skip/fixme → active).`);
+      }
+      if (removed > 0) {
+        parts.push(`<span class="minus">−${removed} test${removed > 1 ? 's' : ''}</span> removed from the suite.`);
+      }
+      if (deactivated > 0) {
+        parts.push(`<span class="minus">−${deactivated} test${deactivated > 1 ? 's' : ''}</span> deactivated.`);
+      }
+
+      if (newTests === 0 && activated === 0 && removed === 0 && deactivated === 0) {
+        parts.push(`No inventory changes detected — test suite identical to baseline.`);
+      }
+
+      if (execTotal > 0) {
+        parts.push(
+          `Full run: <strong>${execTotal} tests executed</strong>, ${passed} passed (${passRate}% pass rate).`
+        );
+      }
+
+      return parts.join(' ');
     }
 
     function renderModules(data) {
@@ -528,6 +795,7 @@
         return;
       }
       renderCards(data);
+      renderBranchDelta(data);
       renderModules(data);
       renderInventoryChart(data);
       renderExecutionChart(data);

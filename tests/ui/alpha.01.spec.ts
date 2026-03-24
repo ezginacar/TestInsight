@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test} from '@playwright/test';
 
 test('alpha ui test 01', async ({ page }) => {
   await console.log('alpha test module 01');

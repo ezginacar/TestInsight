@@ -32,7 +32,7 @@ if [[ "$RUN_TYPE" != "full" ]]; then
   PY_FULL_REGRESSION_EXECUTED="False"
 fi
 
-# Persist rules (can be overridden via env var PERSIST_METRICS)
+# Persist rules
 PERSIST_METRICS=${PERSIST_METRICS:-false}
 if [[ "$BRANCH" == "master" || "$BRANCH" == feature* ]]; then
   PERSIST_METRICS=true
@@ -40,8 +40,6 @@ fi
 
 echo "Collecting Playwright test stats..."
 
-# Preserve the latest full-test results.json while we use Playwright's --list mode.
-# The --list run can overwrite the configured json reporter output, so we back it up.
 rm -f "$SAFE_RESULT_FILE"
 if [ -f "$RESULT_FILE" ]; then
   cp "$RESULT_FILE" "$SAFE_RESULT_FILE"
@@ -49,7 +47,6 @@ fi
 
 PLAYWRIGHT_LIST=$(npx playwright test --list --reporter=list 2>/dev/null || true)
 
-# Restore the real result file if it was overwritten.
 if [ -f "$SAFE_RESULT_FILE" ]; then
   mv "$SAFE_RESULT_FILE" "$RESULT_FILE"
 else
@@ -68,21 +65,136 @@ calc_rate() {
   if [ "$total" -eq 0 ]; then echo 0; else echo $((value * 100 / total)); fi
 }
 
-# Toplam test sayısı
-TOTAL=$(printf '%s\n' "$PLAYWRIGHT_LIST" | grep -cE '^\s+[^ ]' || true)
-TOTAL=${TOTAL:-0}
+# ---------------------------------------------------------------------------
+# Test sayma fonksiyonu — tek yerde tanımla, hem current hem baseline'da kullan
+#
+# Kurallar:
+#   TOTAL   = test('['\"]  +  test.skip('['\"]  +  test.fixme('['\"]  +  test.only('['\"]
+#   SKIPPED = test.skip('['\"]  +  test.describe.skip(
+#   FIXME   = test.fixme('['\"]  +  test.describe.fixme(
+#   ACTIVE  = TOTAL - SKIPPED - FIXME
+#
+# Neden test\s*\(['\"] kullanıyoruz:
+#   - test.describe( → elenir (test adı değil, suite wrapper)
+#   - test.skip(     → dahil edilir (skip'li test de envanterde sayılır)
+#   - test('...'     → dahil edilir
+# ---------------------------------------------------------------------------
+count_tests_in_content() {
+  # Stdin'den içerik alır, 4 sayı döner: total skipped fixme active
+  local content
+  content=$(cat)
 
-FIXME=$(grep -rhoE 'test\.fixme|test\.describe\.fixme' "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ' || true)
-SKIPPED=$(grep -rhoE 'test\.skip|test\.describe\.skip' "$TEST_ROOT"/ 2>/dev/null | wc -l | tr -d ' ' || true)
-FIXME=${FIXME:-0}
-SKIPPED=${SKIPPED:-0}
+  local total skipped fixme active
 
-ACTIVE=$((TOTAL - FIXME - SKIPPED))
-if [ "$ACTIVE" -lt 0 ]; then ACTIVE=0; fi
+  # Tüm test satırları: test(  test.skip(  test.fixme(  test.only(
+  # test.describe( ELENİR çünkü describe'dan sonra ( gelir ama string başlamaz
+  total=$(echo "$content" | grep -cE "^\s*test(\.(skip|fixme|only))?\s*\(['\"]" || true)
+  total=${total:-0}
+
+  skipped=$(echo "$content" | grep -cE "^\s*test\.skip\s*\(['\"]|^\s*test\.describe\.skip\s*\(" || true)
+  skipped=${skipped:-0}
+
+  fixme=$(echo "$content" | grep -cE "^\s*test\.fixme\s*\(['\"]|^\s*test\.describe\.fixme\s*\(" || true)
+  fixme=${fixme:-0}
+
+  active=$((total - skipped - fixme))
+  if [ "$active" -lt 0 ]; then active=0; fi
+
+  echo "$total $skipped $fixme $active"
+}
+
+# Current branch — tüm spec dosyalarını tara
+TOTAL=0
+SKIPPED=0
+FIXME=0
+ACTIVE=0
+
+while IFS= read -r SPEC_FILE; do
+  read -r t s f a < <(cat "$SPEC_FILE" | count_tests_in_content)
+  TOTAL=$((TOTAL + t))
+  SKIPPED=$((SKIPPED + s))
+  FIXME=$((FIXME + f))
+  ACTIVE=$((ACTIVE + a))
+done < <(find "$TEST_ROOT" -name "*.spec.ts")
 
 OVERALL_HEALTH=$(calc_health "$ACTIVE" "$TOTAL")
 
-# Global execution metrics (based on the most recent full test run)
+# ---------------------------------------------------------------------------
+# Branch delta
+#
+# Fix 1 — Path-agnostic: klasör taşıma baseline'ı bozmaz
+# Fix 2 — merge-base: başka branch merge edilse bu branch etkilenmez
+# Fix 3 — Doğru sayma: skip/fixme de toplama dahil, test.describe elenir
+# ---------------------------------------------------------------------------
+BASELINE_TOTAL=0
+BASELINE_ACTIVE=0
+BASELINE_SKIPPED=0
+BASELINE_FIXME=0
+BRANCH_NEW_TESTS=0
+BRANCH_REMOVED_TESTS=0
+BRANCH_ACTIVATED_TESTS=0
+BRANCH_DEACTIVATED_TESTS=0
+MERGE_BASE_COMMIT=""
+IS_FEATURE_BRANCH=false
+PY_IS_FEATURE_BRANCH="False"
+
+if [ "$BRANCH" != "master" ] && [ "$BRANCH" != "local" ]; then
+  IS_FEATURE_BRANCH=true
+  PY_IS_FEATURE_BRANCH="True"
+
+  echo "Calculating branch delta against master..."
+
+  git fetch origin master --quiet 2>/dev/null || true
+
+  MERGE_BASE_COMMIT=$(git merge-base HEAD origin/master 2>/dev/null || echo "")
+  if [ -z "$MERGE_BASE_COMMIT" ]; then
+    echo "Warning: merge-base not found, falling back to origin/master HEAD"
+    MERGE_BASE_COMMIT="origin/master"
+  fi
+
+  echo "Merge base commit: $MERGE_BASE_COMMIT"
+
+  # Merge-base'deki tüm spec dosyalarını path'ten bağımsız oku
+  # count_tests_in_content ile aynı sayma mantığını kullan
+  while IFS= read -r SPEC; do
+    read -r t s f a < <(git show "${MERGE_BASE_COMMIT}:${SPEC}" 2>/dev/null | count_tests_in_content)
+    BASELINE_TOTAL=$((BASELINE_TOTAL + t))
+    BASELINE_SKIPPED=$((BASELINE_SKIPPED + s))
+    BASELINE_FIXME=$((BASELINE_FIXME + f))
+    BASELINE_ACTIVE=$((BASELINE_ACTIVE + a))
+  done < <(git ls-tree -r --name-only "$MERGE_BASE_COMMIT" 2>/dev/null | grep "\.spec\.ts$")
+
+  # Delta hesapla
+  TOTAL_DIFF=$((TOTAL - BASELINE_TOTAL))
+  if [ "$TOTAL_DIFF" -gt 0 ]; then
+    BRANCH_NEW_TESTS=$TOTAL_DIFF
+  elif [ "$TOTAL_DIFF" -lt 0 ]; then
+    BRANCH_REMOVED_TESTS=$(( -TOTAL_DIFF ))
+  fi
+
+  # Aktive edilen / deaktive edilen (skip/fixme ↔ active geçişi)
+  ACTIVE_DIFF=$((ACTIVE - BASELINE_ACTIVE))
+  if [ "$ACTIVE_DIFF" -gt "$BRANCH_NEW_TESTS" ]; then
+    BRANCH_ACTIVATED_TESTS=$((ACTIVE_DIFF - BRANCH_NEW_TESTS))
+  elif [ "$ACTIVE_DIFF" -lt 0 ]; then
+    BRANCH_DEACTIVATED_TESTS=$(( -ACTIVE_DIFF ))
+  fi
+
+  echo "Baseline total:        $BASELINE_TOTAL"
+  echo "Baseline active:       $BASELINE_ACTIVE"
+  echo "Baseline skipped:      $BASELINE_SKIPPED"
+  echo "Baseline fixme:        $BASELINE_FIXME"
+  echo "-----------------------------"
+  echo "Current total:         $TOTAL"
+  echo "Current active:        $ACTIVE"
+  echo "-----------------------------"
+  echo "New tests added:       $BRANCH_NEW_TESTS"
+  echo "Tests removed:         $BRANCH_REMOVED_TESTS"
+  echo "Tests activated:       $BRANCH_ACTIVATED_TESTS"
+  echo "Tests deactivated:     $BRANCH_DEACTIVATED_TESTS"
+fi
+
+# Global execution metrics
 if [ -f "$RESULT_FILE" ]; then
   EXEC_STATS=$(jq '
     [.. | objects | select(has("status") and has("results") and
@@ -139,23 +251,29 @@ FIRST_FILE=1
 BY_MODULE_JSON="{"
 FIRST_MOD=1
 
-# Modüller: tests/ altındaki klasörler (api, web, mobile, desktop ...)
-MODULES=$(find "$TEST_ROOT" -mindepth 1 -maxdepth 1 -type d | sed "s|^${TEST_ROOT}/||" | sort)
+# ---------------------------------------------------------------------------
+# İç içe modül desteği — spec dosyası olan her klasör ayrı modül
+# ---------------------------------------------------------------------------
+MODULES=$(find "$TEST_ROOT" -mindepth 1 -type d | sed "s|^${TEST_ROOT}/||" | sort)
 
 for MODULE in $MODULES; do
   MOD_DIR="${TEST_ROOT}/${MODULE}"
+
+  SPEC_COUNT=$(find "$MOD_DIR" -maxdepth 1 -name "*.spec.ts" | wc -l | tr -d ' ')
+  if [ "$SPEC_COUNT" -eq 0 ]; then
+    continue
+  fi
+
   MOD_TOTAL=0
   MOD_ACTIVE=0
   MOD_FIXME=0
   MOD_SKIPPED=0
 
-  # Modül bazlı execution — results.json suite title'larından çıkar
-  # Suite title formatı: "api/auth.spec.ts" → modül = "api"
   if [ -f "$SAFE_RESULT_FILE" ]; then
     MOD_EXEC=$(jq --arg mod "$MODULE" '
       [
         .suites[]
-        | select(.title | startswith($mod + "/"))
+        | select(.title | startswith($mod + "/") or . == $mod)
         | .. | objects
         | select(has("status") and has("results") and
             (.status == "expected" or .status == "unexpected" or .status == "skipped"))
@@ -181,28 +299,19 @@ for MODULE in $MODULES; do
   while IFS= read -r SPEC_FILE; do
     BASENAME=$(basename "$SPEC_FILE")
 
-    COUNT=$(printf '%s\n' "$PLAYWRIGHT_LIST" | grep -c "$BASENAME" || true)
-    COUNT=${COUNT:-0}
+    read -r FILE_TOTAL FILE_SKIPPED FILE_FIXME FILE_ACTIVE < <(cat "$SPEC_FILE" | count_tests_in_content)
 
-    FILE_FIXME=$(grep -hoE 'test\.fixme|test\.describe\.fixme' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ' || true)
-    FILE_SKIPPED=$(grep -hoE 'test\.skip|test\.describe\.skip' "$SPEC_FILE" 2>/dev/null | wc -l | tr -d ' ' || true)
-    FILE_FIXME=${FILE_FIXME:-0}
-    FILE_SKIPPED=${FILE_SKIPPED:-0}
+    FILE_HEALTH=$(calc_health "$FILE_ACTIVE" "$FILE_TOTAL")
 
-    FILE_ACTIVE=$((COUNT - FILE_FIXME - FILE_SKIPPED))
-    if [ "$FILE_ACTIVE" -lt 0 ]; then FILE_ACTIVE=0; fi
-
-    FILE_HEALTH=$(calc_health "$FILE_ACTIVE" "$COUNT")
-
-    MOD_TOTAL=$((MOD_TOTAL + COUNT))
+    MOD_TOTAL=$((MOD_TOTAL + FILE_TOTAL))
     MOD_ACTIVE=$((MOD_ACTIVE + FILE_ACTIVE))
     MOD_FIXME=$((MOD_FIXME + FILE_FIXME))
     MOD_SKIPPED=$((MOD_SKIPPED + FILE_SKIPPED))
 
     if [ "$FIRST_FILE" -eq 1 ]; then FIRST_FILE=0; else FILES_JSON="$FILES_JSON,"; fi
-    FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"path\":\"${SPEC_FILE}\",\"module\":\"${MODULE}\",\"total\":${COUNT},\"active\":${FILE_ACTIVE},\"fixme\":${FILE_FIXME},\"skipped\":${FILE_SKIPPED},\"health\":${FILE_HEALTH}}"
+    FILES_JSON="${FILES_JSON}{\"name\":\"${BASENAME}\",\"path\":\"${SPEC_FILE}\",\"module\":\"${MODULE}\",\"total\":${FILE_TOTAL},\"active\":${FILE_ACTIVE},\"fixme\":${FILE_FIXME},\"skipped\":${FILE_SKIPPED},\"health\":${FILE_HEALTH}}"
 
-  done < <(find "$MOD_DIR" -name "*.spec.ts" | sort)
+  done < <(find "$MOD_DIR" -maxdepth 1 -name "*.spec.ts" | sort)
 
   MOD_HEALTH=$(calc_health "$MOD_ACTIVE" "$MOD_TOTAL")
   MOD_EXEC_TOTAL=$((MOD_PASSED + MOD_FAILED + MOD_EXEC_SKIPPED))
@@ -218,38 +327,66 @@ FILES_JSON="${FILES_JSON}]"
 BY_MODULE_JSON="${BY_MODULE_JSON}}"
 
 echo "By module: $BY_MODULE_JSON"
-echo "Files: $FILES_JSON"
 
 if [ "$PERSIST_METRICS" != "true" ]; then
   echo "Skipping docs/data.json update for branch: $BRANCH"
   exit 0
 fi
 
-python3 - <<EOF
-import json
+# Python bloğuna geçmeden önce tüm değişkenleri export et
+export DATA_FILE RESULT_FILE FILES_JSON BY_MODULE_JSON
+export DATE COMMIT BRANCH
+export RUN_TYPE RUN_REASON RUN_LABEL RUN_FILTER
+export PY_FULL_REGRESSION_EXECUTED PY_IS_FEATURE_BRANCH
+export TOTAL ACTIVE FIXME SKIPPED OVERALL_HEALTH
+export EXEC_TOTAL PASSED FAILED EXEC_SKIPPED PASS_RATE FAIL_RATE
+export BASELINE_TOTAL BASELINE_ACTIVE BASELINE_SKIPPED BASELINE_FIXME
+export BRANCH_NEW_TESTS BRANCH_REMOVED_TESTS BRANCH_ACTIVATED_TESTS BRANCH_DEACTIVATED_TESTS
+export MERGE_BASE_COMMIT
+
+python3 - <<'PYEOF'
+import json, os
 from pathlib import Path
 
-DATA_FILE = "$DATA_FILE"
-RESULT_FILE = "$RESULT_FILE"
+DATA_FILE = os.environ.get("DATA_FILE", "docs/data.json")
+RESULT_FILE = os.environ.get("RESULT_FILE", "test-results/results.json")
+FILES_JSON = os.environ.get("FILES_JSON", "[]")
+BY_MODULE_JSON = os.environ.get("BY_MODULE_JSON", "{}")
 
-# Build module-level summaries from file info.
-files = json.loads("""$FILES_JSON""")
-by_module = {}
-for f in files:
-    module = f.get("module", "root")
-    entry = by_module.setdefault(module, {"total": 0, "active": 0, "fixme": 0, "skipped": 0, "health": 0})
-    entry["total"] += f.get("total", 0)
-    entry["active"] += f.get("active", 0)
-    entry["fixme"] += f.get("fixme", 0)
-    entry["skipped"] += f.get("skipped", 0)
+DATE = os.environ["DATE"]
+COMMIT = os.environ["COMMIT"]
+BRANCH = os.environ["BRANCH"]
+RUN_TYPE = os.environ["RUN_TYPE"]
+RUN_REASON = os.environ["RUN_REASON"]
+RUN_LABEL = os.environ["RUN_LABEL"]
+RUN_FILTER = os.environ["RUN_FILTER"]
+PY_FULL_REGRESSION_EXECUTED = os.environ["PY_FULL_REGRESSION_EXECUTED"] == "True"
+PY_IS_FEATURE_BRANCH = os.environ["PY_IS_FEATURE_BRANCH"] == "True"
 
-# Compute a simple health score (ratio of active to total) for each module.
-for module, entry in by_module.items():
-    total = entry.get("total", 0)
-    active = entry.get("active", 0)
-    entry["health"] = int(active * 100 / total) if total else 0
+TOTAL = int(os.environ["TOTAL"])
+ACTIVE = int(os.environ["ACTIVE"])
+FIXME = int(os.environ["FIXME"])
+SKIPPED = int(os.environ["SKIPPED"])
+OVERALL_HEALTH = int(os.environ["OVERALL_HEALTH"])
+EXEC_TOTAL = int(os.environ["EXEC_TOTAL"])
+PASSED = int(os.environ["PASSED"])
+FAILED = int(os.environ["FAILED"])
+EXEC_SKIPPED = int(os.environ["EXEC_SKIPPED"])
+PASS_RATE = int(os.environ["PASS_RATE"])
+FAIL_RATE = int(os.environ["FAIL_RATE"])
+BASELINE_TOTAL = int(os.environ["BASELINE_TOTAL"])
+BASELINE_ACTIVE = int(os.environ["BASELINE_ACTIVE"])
+BASELINE_SKIPPED = int(os.environ["BASELINE_SKIPPED"])
+BASELINE_FIXME = int(os.environ["BASELINE_FIXME"])
+BRANCH_NEW_TESTS = int(os.environ["BRANCH_NEW_TESTS"])
+BRANCH_REMOVED_TESTS = int(os.environ["BRANCH_REMOVED_TESTS"])
+BRANCH_ACTIVATED_TESTS = int(os.environ["BRANCH_ACTIVATED_TESTS"])
+BRANCH_DEACTIVATED_TESTS = int(os.environ["BRANCH_DEACTIVATED_TESTS"])
+MERGE_BASE_COMMIT = os.environ.get("MERGE_BASE_COMMIT", "")
 
-# Derive execution stats per module from Playwright results.json (if present).
+files = json.loads(FILES_JSON)
+by_module = json.loads(BY_MODULE_JSON)
+
 module_execution = {}
 if Path(RESULT_FILE).is_file():
     try:
@@ -262,7 +399,11 @@ if Path(RESULT_FILE).is_file():
                     status = test.get("status")
                     if status is None:
                         continue
-                    module = (file_path or "").split("/")[0] or "root"
+                    if file_path:
+                        parts = file_path.replace("\\", "/").split("/")
+                        module = "/".join(parts[:-1]) if len(parts) > 1 else "root"
+                    else:
+                        module = "root"
                     exec_entry = module_execution.setdefault(module, {"passed": 0, "failed": 0, "skipped": 0})
                     if status == "expected":
                         exec_entry["passed"] += 1
@@ -292,33 +433,45 @@ for module, stats in module_execution.items():
     }
 
 new_entry = {
-  "date": "$DATE",
-  "commit": "$COMMIT",
-  "branch": "$BRANCH",
-  "runContext": {
-    "type": "$RUN_TYPE",
-    "reason": "$RUN_REASON",
-    "label": "$RUN_LABEL",
-    "filter": "$RUN_FILTER",
-    "fullRegressionExecuted": $PY_FULL_REGRESSION_EXECUTED
-  },
-  "summary": {
-    "total": $TOTAL,
-    "active": $ACTIVE,
-    "fixme": $FIXME,
-    "skipped": $SKIPPED,
-    "health": $OVERALL_HEALTH
-  },
-  "execution": {
-    "total": $EXEC_TOTAL,
-    "passed": $PASSED,
-    "failed": $FAILED,
-    "skipped": $EXEC_SKIPPED,
-    "passRate": $PASS_RATE,
-    "failRate": $FAIL_RATE
-  },
-  "byModule": by_module,
-  "files": files
+    "date": DATE,
+    "commit": COMMIT,
+    "branch": BRANCH,
+    "runContext": {
+        "type": RUN_TYPE,
+        "reason": RUN_REASON,
+        "label": RUN_LABEL,
+        "filter": RUN_FILTER,
+        "fullRegressionExecuted": PY_FULL_REGRESSION_EXECUTED
+    },
+    "summary": {
+        "total": TOTAL,
+        "active": ACTIVE,
+        "fixme": FIXME,
+        "skipped": SKIPPED,
+        "health": OVERALL_HEALTH
+    },
+    "execution": {
+        "total": EXEC_TOTAL,
+        "passed": PASSED,
+        "failed": FAILED,
+        "skipped": EXEC_SKIPPED,
+        "passRate": PASS_RATE,
+        "failRate": FAIL_RATE
+    },
+    "branchDelta": {
+        "isFeatureBranch": PY_IS_FEATURE_BRANCH,
+        "mergeBaseCommit": MERGE_BASE_COMMIT,
+        "baselineTotal": BASELINE_TOTAL,
+        "baselineActive": BASELINE_ACTIVE,
+        "baselineSkipped": BASELINE_SKIPPED,
+        "baselineFixme": BASELINE_FIXME,
+        "newTests": BRANCH_NEW_TESTS,
+        "removedTests": BRANCH_REMOVED_TESTS,
+        "activatedTests": BRANCH_ACTIVATED_TESTS,
+        "deactivatedTests": BRANCH_DEACTIVATED_TESTS
+    },
+    "byModule": by_module,
+    "files": files
 }
 
 try:
@@ -350,7 +503,7 @@ def comparable_payload(entry):
 
 if last_entry is None or comparable_payload(last_entry) != comparable_payload(new_entry):
     history.append(new_entry)
-    history = history[-6:]
+    history = history[-30:]
 else:
     print("No meaningful inventory change detected, skipping history append.")
 
@@ -365,6 +518,6 @@ with open(DATA_FILE, "w") as f:
     json.dump(result, f, indent=2)
 
 print("Saved to", DATA_FILE)
-EOF
+PYEOF
 
 echo "Metrics written to docs/data.json"

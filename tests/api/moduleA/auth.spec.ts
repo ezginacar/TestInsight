@@ -2,7 +2,7 @@ import { test} from '@playwright/test';
 
 const BASE_URL = 'https://api.example.com';
 
-test.describe('Auth Tests', () => {
+test.describe('Auth Tests @smoke', () => {
   test('auth test1', async ({ request }) => {
     await console.log('auth test 01');
   });
