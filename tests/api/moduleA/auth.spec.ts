@@ -1,13 +1,11 @@
 import { test} from '@playwright/test';
 
-const BASE_URL = 'https://api.example.com';
-
-test.describe('Auth Tests @smoke', () => {
+test.describe('Auth Tests @smoke' ,() => {
   test('auth test1', async ({ request }) => {
     await console.log('auth test 01');
   });
 
-  test('auth test 2', async ({ request }) => {
+  test('auth test 2 ', async ({ request }) => {
     await console.log('auth test 02');
   });
 

@@ -47,11 +47,11 @@
         "skipped": 0,
         "health": 100,
         "execution": {
-          "passed": 7,
-          "failed": 1,
+          "passed": 4,
+          "failed": 0,
           "skipped": 0,
-          "passRate": 87,
-          "failRate": 12
+          "passRate": 100,
+          "failRate": 0
         }
       },
       "api/moduleB": {
@@ -61,11 +61,11 @@
         "skipped": 0,
         "health": 100,
         "execution": {
-          "passed": 3,
-          "failed": 2,
+          "passed": 1,
+          "failed": 0,
           "skipped": 0,
-          "passRate": 60,
-          "failRate": 40
+          "passRate": 100,
+          "failRate": 0
         }
       },
       "ui": {
